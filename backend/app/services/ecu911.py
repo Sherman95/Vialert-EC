@@ -5,7 +5,7 @@ import json
 from app.core.config import settings
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
+print("Hola soy el cambio nuevo - VERSION 5000")
 class ECU911Service:
     def limpiar_texto(self, texto):
         if not texto: return "N/A"
