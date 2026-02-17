@@ -7,7 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Prioridad: Variable de entorno (Nube) -> SQLite local (Desarrollo)
+# Prioridad: Variable de entorno (Nube) -> SQLite local (Desarrollo)
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./vialert.db")
+
+# Fix para Heroku/Railway/Render que a veces usan postgres:// y SQLAlchemy pide postgresql://
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
