@@ -21,3 +21,19 @@ export const viasService = {
         }
     },
 };
+
+export const reportsService = {
+    getAll: async () => {
+        try {
+            const response = await apiClient.get('/api/reports');
+            return response.data;
+        } catch (error) {
+            console.error("Error obteniendo reportes:", error);
+            return []; // Retornamos array vacío para no romper la app principal
+        }
+    },
+    create: async (reportData) => {
+        const response = await apiClient.post('/api/reports', reportData);
+        return response.data;
+    }
+};

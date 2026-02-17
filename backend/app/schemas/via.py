@@ -5,6 +5,7 @@ from typing import List, Optional
 class ViaBase(BaseModel):
     id: str
     provincia: str
+    canton: Optional[str]
     nombre_via: str
     estado_texto: str
     estado_codigo: str

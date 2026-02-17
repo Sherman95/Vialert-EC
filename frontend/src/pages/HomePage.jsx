@@ -1,13 +1,16 @@
-import React from 'react';
-import { RefreshCw, AlertCircle, Filter, Activity, Map as MapIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { RefreshCw, Map as MapIcon, Plus, List, Search, Filter } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import ViaCard from '../components/ui/ViaCard';
 import { Filters } from '../components/ui/Filters';
 import { StatsGrid } from '../components/ui/StatsGrid';
-import { ViaMap } from '../components/ui/ViaMap'; // Asegúrate de haberlo creado
+import { ViaMap } from '../components/ui/ViaMap';
+import { ReportModal } from '../components/ui/ReportModal';
 import { useVias } from '../hooks/useVias';
 
 export const HomePage = () => {
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [mobileView, setMobileView] = useState('list'); // 'list' | 'map'
     const {
         vias,
         stats,
@@ -19,101 +22,124 @@ export const HomePage = () => {
     } = useVias();
 
     return (
-        <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-900 pb-20">
-            <Navbar onRefresh={refresh} loading={loading} />
+        <div className="h-screen bg-slate-50 flex flex-col lg:flex-row overflow-hidden font-sans text-slate-900">
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* --- PANEL IZQUIERDO (SIDEBAR) --- */}
+            <aside className={`w-full lg:w-[480px] xl:w-[500px] flex flex-col bg-white border-r border-slate-200 z-20 shadow-xl lg:h-full relative transition-transform duration-300 ${mobileView === 'map' ? 'hidden lg:flex' : 'flex h-full'}`}>
 
-                {/* --- SECCIÓN 1: DASHBOARD & MAPA --- */}
-                <section className="mb-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="bg-slate-900 p-2 rounded-lg text-white">
-                            <Activity size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Panel de Control en Vivo</h2>
-                            <p className="text-sm text-slate-500 font-medium">Estado de la red vial nacional del Ecuador</p>
-                        </div>
+                {/* Header Compacto */}
+                <header className="p-4 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+                    <Navbar onRefresh={refresh} loading={loading} simpleMode />
+
+                    {/* Mobile Tabs */}
+                    <div className="mt-4 flex lg:hidden bg-slate-100 p-1 rounded-xl">
+                        <button
+                            onClick={() => setMobileView('list')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${mobileView === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
+                        >
+                            <List size={14} /> Lista
+                        </button>
+                        <button
+                            onClick={() => setMobileView('map')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${mobileView === 'map' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
+                        >
+                            <MapIcon size={14} /> Mapa
+                        </button>
                     </div>
 
-                    <StatsGrid stats={stats} />
-
-                    <div className="group relative">
-                        <div className="absolute -top-3 left-6 z-[1000] bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                            Vista Satelital Operativa
+                    {/* Buscador & Stats Mini */}
+                    <div className="mt-4 space-y-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 text-slate-400" size={16} />
+                            <input
+                                type="text"
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                placeholder="Buscar vía, cantón o incidente..."
+                                value={filters.searchTerm}
+                                onChange={(e) => filters.setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <ViaMap vias={vias} />
-                    </div>
-                </section>
 
-                {/* --- SECCIÓN 2: FILTROS Y BÚSQUEDA --- */}
-                <section className="mb-8">
-                    <div className="bg-white/50 backdrop-blur-sm p-1 rounded-2xl border border-white shadow-xl shadow-slate-200/50">
-                        <div className="bg-white rounded-xl p-6 border border-slate-100">
-                            <div className="flex flex-col md:flex-row md:items-end gap-6">
-                                <div className="flex-grow">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Buscador Inteligente</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            className="block w-full pl-4 pr-12 py-4 border-2 border-slate-100 rounded-xl bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-0 outline-none transition-all text-sm font-semibold"
-                                            placeholder="Ej: 'Vía Alóag', 'Derrumbe en El Oro'..."
-                                            value={filters.searchTerm}
-                                            onChange={(e) => filters.setSearchTerm(e.target.value)}
-                                        />
-                                        <div className="absolute inset-y-0 right-4 flex items-center">
-                                            <RefreshCw size={18} className={`text-slate-300 ${loading ? 'animate-spin text-blue-500' : ''}`} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="md:w-1/3">
-                                    <Filters
-                                        filterEstado={filters.filterEstado}
-                                        setFilterEstado={filters.setFilterEstado}
-                                        filterProvincia={filters.filterProvincia}
-                                        setFilterProvincia={filters.setFilterProvincia}
-                                        provincias={provinciasDisponibles}
-                                    />
-                                </div>
-                            </div>
+                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                            <Filters
+                                filterEstado={filters.filterEstado}
+                                setFilterEstado={filters.setFilterEstado}
+                                filterProvincia={filters.filterProvincia}
+                                setFilterProvincia={filters.setFilterProvincia}
+                                provincias={provinciasDisponibles}
+                                compact
+                            />
                         </div>
                     </div>
-                </section>
+                </header>
 
-                {/* --- SECCIÓN 3: ALERTAS DE LA COMUNIDAD --- */}
-                <section>
-                    <div className="flex items-center gap-4 mb-8">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] whitespace-nowrap">Reportes de Carretera</h3>
-                        <div className="h-[1px] w-full bg-slate-200"></div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                            {vias.length} ACTIVOS
-                        </div>
-                    </div>
+                {/* Lista Scrollable */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
 
-                    {/* Error State */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex items-center gap-4 text-red-700 mb-8">
-                            <AlertCircle size={24} />
-                            <p className="font-bold">{error}</p>
+                    {/* Stats Resumen (Solo si no hay búsqueda activa para no estorbar) */}
+                    {!filters.searchTerm && (
+                        <div className="mb-2">
+                            <StatsGrid stats={stats} />
                         </div>
                     )}
+
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                            {vias.length} Reportes Activos
+                        </h3>
+                        {error && <span className="text-xs text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded">Error de conexión</span>}
+                    </div>
 
                     {/* Empty State */}
                     {!loading && vias.length === 0 && (
-                        <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Sin coincidencias detectadas</p>
+                        <div className="group relative">
+                            <div className="absolute -top-3 left-6 z-[1000] bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                Vista Satelital Operativa
+                            </div>
+                            <ViaMap vias={vias} selectedProvince={filters.filterProvincia} />
                         </div>
                     )}
 
-                    {/* Grid de Tarjetas con animación */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Lista de Tarjetas */}
+                    <div className="space-y-4 pb-20 lg:pb-4">
                         {vias.map((via) => (
                             <ViaCard key={via.id} via={via} />
                         ))}
                     </div>
-                </section>
+                </div>
+
+                {/* FAB (Solo visible en desktop o lista móvil) */}
+                <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="absolute bottom-6 right-6 lg:bottom-8 lg:right-8 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3.5 lg:p-4 rounded-full shadow-lg shadow-blue-500/30 hover:scale-110 transition-all active:scale-95 group"
+                    title="Reportar Incidente"
+                >
+                    <Plus size={24} className="group-hover:rotate-90 transition-transform" />
+                </button>
+            </aside>
+
+            {/* --- MAPA (DERECHA / FULL MOBILE) --- */}
+            <main className={`flex-1 relative bg-slate-100 ${mobileView === 'list' ? 'hidden lg:block' : 'block h-full'}`}>
+                {/* Botón Volver a Lista (Solo Móvil) */}
+                <button
+                    onClick={() => setMobileView('list')}
+                    className="absolute top-4 left-4 z-[1000] lg:hidden bg-white text-slate-700 p-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2"
+                >
+                    <List size={16} /> Volver a Lista
+                </button>
+
+                <div className="w-full h-full">
+                    <ViaMap vias={vias} interactive selectedProvince={filters.filterProvincia} />
+                </div>
             </main>
+
+            {/* Modal */}
+            <ReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                onReportSubmitted={refresh}
+                provincias={provinciasDisponibles}
+            />
         </div>
     );
 };

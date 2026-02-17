@@ -1,34 +1,47 @@
-import { useState, useEffect, useMemo } from 'react';
-import { viasService } from '../services/api';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { viasService, reportsService } from '../services/api';
 
 export const useVias = () => {
-    const [vias, setVias] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Estados para los filtros
+    // Estados para los filtros (UI State) se mantienen locales
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterEstado, setFilterEstado] = useState('TODAS'); // TODAS, CERRADA, PARCIAL, HABILITADA
+    const [filterEstado, setFilterEstado] = useState('TODAS');
     const [filterProvincia, setFilterProvincia] = useState('TODAS');
 
-    const loadData = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await viasService.getAll();
-            setVias(data);
-        } catch (err) {
-            setError('No se pudo conectar con el servidor.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // React Query para cargar datos (Server State)
+    const { data: vias = [], isLoading: loading, error, refetch } = useQuery({
+        queryKey: ['vias'],
+        queryFn: async () => {
+            // Cargar datos oficiales y de usuarios en paralelo
+            const [viasData, reportsData] = await Promise.all([
+                viasService.getAll(),
+                reportsService.getAll()
+            ]);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+            // Normalizar reportes de usuarios
+            const normalizedReports = reportsData.map(r => ({
+                id: `user-${r.id}`,
+                provincia: r.provincia,
+                nombre_via: r.titulo,
+                estado_texto: r.tipo_incidente,
+                estado_codigo: 'REPORTE',
+                observaciones: r.descripcion,
+                fecha_actualizacion: r.timestamp,
+                fuente: 'COMUNIDAD',
+                coordenadas: { lat: r.latitud, lng: r.longitud },
+                isUserReport: true
+            }));
 
-    // Lógica de Filtrado y Ordenamiento
+            // Combinar y Ordenar por fecha (recientes primero)
+            return [...normalizedReports, ...viasData].sort((a, b) =>
+                new Date(b.fecha_actualizacion) - new Date(a.fecha_actualizacion)
+            );
+        },
+        refetchInterval: 10000, // Polling: Actualizar cada 10 segundos
+        staleTime: 5000, // Data fresca por 5 segundos
+    });
+
+    // Lógica de Filtrado (Se mantiene igual, operando sobre 'vias')
     const filteredVias = useMemo(() => {
         let resultado = vias;
 
@@ -38,7 +51,7 @@ export const useVias = () => {
             resultado = resultado.filter(via =>
                 via.provincia.toLowerCase().includes(term) ||
                 via.nombre_via.toLowerCase().includes(term) ||
-                via.observaciones.toLowerCase().includes(term)
+                (via.observaciones && via.observaciones.toLowerCase().includes(term))
             );
         }
 
@@ -52,25 +65,22 @@ export const useVias = () => {
             resultado = resultado.filter(via => via.provincia === filterProvincia);
         }
 
-        // 4. Ordenar por fecha (Las más recientes primero)
-        // Asumimos formato YYYY-MM-DD HH:MM:SS
-        resultado.sort((a, b) => new Date(b.fecha_actualizacion) - new Date(a.fecha_actualizacion));
-
         return resultado;
     }, [vias, searchTerm, filterEstado, filterProvincia]);
 
-    // Extraer lista única de provincias para el dropdown
+    // Extraer lista única de provincias desde la data ya combinada
     const provinciasDisponibles = useMemo(() => {
         const provincias = vias.map(v => v.provincia);
-        return [...new Set(provincias)].sort(); // Elimina duplicados y ordena A-Z
+        return [...new Set(provincias)].sort();
     }, [vias]);
 
-    // Contadores para estadísticas
+    // Contadores basados en 'vias' (data completa, no filtrada)
     const stats = useMemo(() => ({
         total: vias.length,
         cerradas: vias.filter(v => v.estado_codigo === 'CERRADA').length,
         parciales: vias.filter(v => v.estado_codigo === 'PARCIAL').length,
-        habilitadas: vias.filter(v => v.estado_codigo === 'HABILITADA').length
+        habilitadas: vias.filter(v => v.estado_codigo === 'HABILITADA').length,
+        reportes: vias.filter(v => v.estado_codigo === 'REPORTE').length
     }), [vias]);
 
     return {
@@ -78,12 +88,12 @@ export const useVias = () => {
         stats,
         provinciasDisponibles,
         loading,
-        error,
+        error: error ? 'Error conectando al servidor' : null,
         filters: {
             searchTerm, setSearchTerm,
             filterEstado, setFilterEstado,
             filterProvincia, setFilterProvincia
         },
-        refresh: loadData
+        refresh: refetch
     };
 };

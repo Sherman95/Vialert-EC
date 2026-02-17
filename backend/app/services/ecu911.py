@@ -44,6 +44,7 @@ class ECU911Service:
         for item in raw_data:
             obs = self.limpiar_texto(item.get("observaciones"))
             prov = self.limpiar_texto(item.get("Provincia", {}).get("descripcion", "DESCONOCIDO"))
+            canton = self.limpiar_texto(item.get("Canton", {}).get("descripcion", "DESCONOCIDO"))
             nom = self.limpiar_texto(item.get("descripcion"))
             est = self.limpiar_texto(item.get("EstadoActual", {}).get("nombre", "DESCONOCIDO"))
             
@@ -55,6 +56,7 @@ class ECU911Service:
             vias_procesadas.append({
                 "id": f"{prov}-{nom}".lower().replace(" ", "-"),
                 "provincia": prov,
+                "canton": canton,
                 "nombre_via": nom,
                 "estado_texto": est,
                 "estado_codigo": self.detectar_estado(est),

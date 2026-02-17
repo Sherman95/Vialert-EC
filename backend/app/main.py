@@ -13,7 +13,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.core.database import engine, Base
+from app.api.endpoints import reports
+
+# Crear tablas
+Base.metadata.create_all(bind=engine)
+
 app.include_router(api_router)
+app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 
 @app.get("/")
 def read_root():

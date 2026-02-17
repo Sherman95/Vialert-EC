@@ -4,8 +4,37 @@ import { Filter, X } from 'lucide-react';
 export const Filters = ({
     filterEstado, setFilterEstado,
     filterProvincia, setFilterProvincia,
-    provincias
+    provincias,
+    compact
 }) => {
+    if (compact) {
+        return (
+            <div className="flex gap-2">
+                <select
+                    value={filterEstado}
+                    onChange={(e) => setFilterEstado(e.target.value)}
+                    className="border-slate-200 rounded-lg shadow-sm focus:border-blue-500 text-xs py-1.5 px-2 bg-white font-medium"
+                >
+                    <option value="TODAS">Estado: Todos</option>
+                    <option value="CERRADA">🔴 Cerradas</option>
+                    <option value="PARCIAL">🟡 Parciales</option>
+                    <option value="HABILITADA">🟢 Habilitadas</option>
+                </select>
+
+                <select
+                    value={filterProvincia}
+                    onChange={(e) => setFilterProvincia(e.target.value)}
+                    className="border-slate-200 rounded-lg shadow-sm focus:border-blue-500 text-xs py-1.5 px-2 bg-white font-medium max-w-[150px]"
+                >
+                    <option value="TODAS">Provincia: Todas</option>
+                    {provincias.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                    ))}
+                </select>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">

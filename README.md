@@ -4,45 +4,57 @@
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?style=for-the-badge&logo=react-query&logoColor=white)
 
-**Vialert-EC** es un monitor de estado vial en tiempo real diseñado específicamente para Ecuador. Utiliza la API pública del ECU911 para proporcionar información actualizada sobre el estado de las carreteras, alertas de tráfico y rutas alternas.
+**Vialert-EC** es un monitor de estado vial en tiempo real diseñado específicamente para Ecuador. Combina datos oficiales del ECU911 con reportes ciudadanos para proporcionar información vital sobre carreteras, tráfico y rutas alternas.
 
-Este proyecto sigue una arquitectura moderna de **Monorepo**, separando claramente el frontend y el backend para una escalabilidad y mantenimiento óptimos.
+Este proyecto sigue una arquitectura moderna de **Monorepo**, optimizada para escalabilidad y despliegue rápido.
 
 ---
 
 ## ✨ Características Principales
 
-*   **Monitor en Tiempo Real:** Consulta directa a la API del ECU911.
-*   **Mapa Interactivo:** Visualización de alertas en un mapa usando Leaflet.
-*   **Filtrado Inteligente:** Búsqueda por provincia o estado de la vía.
-*   **Detección de Rutas Alternas:** Algoritmo propio para extraer rutas alternas de los comentarios del reporte.
-*   **Interfaz Moderna:** Diseño responsive y amigable construido con React y Tailwind CSS.
+### 🖥️ UI/UX Moderna & Responsive
+*   **Split View (Escritorio):** Diseño profesional con listado lateral y mapa interactivo fijo.
+*   **Mobile First:** Navegación optimizada con pestañas (Lista/Mapa) y encabezados fijos.
+*   **Modo Compacto:** Tarjetas de información optimizadas para mostrar más datos en menos espacio.
+
+### 🗺️ Mapa Interactivo Avanzado
+*   **Georeferenciación Inteligente:** Visualización de alertas oficiales (incluso sin coordenadas exactas) basada en cantones.
+*   **Highlight por Provincia:** Zoom automático y resaltado de perímetro al filtrar por provincia (GeoJSON).
+*   **Marcadores Dinámicos:** Colores distintivos según la gravedad del incidente (🔴 Cerrada, 🟠 Parcial, 🟢 Habilitada, 🟣 Reporte Ciudadano).
+
+### ⚡ Rendimiento y Datos
+*   **Tiempo Real:** Actualizaciones automáticas con **TanStack Query** (Polling inteligente).
+*   **Filtrado Instantáneo:** Búsqueda por texto, estado y provincia sin recargas.
+*   **Rutas Alternas:** Detección automática de rutas sugeridas en el texto del reporte.
 
 ---
 
-## 🏗️ Arquitectura del Proyecto
+## 🏗️ Stack Tecnológico
 
-El proyecto está dividido en dos grandes componentes:
+### 📂 `frontend/` (Vite + React)
+*   **Core:** React 18, Vite.
+*   **Estado & Data:** `@tanstack/react-query` (Gestión de estado servidor y caché).
+*   **Mapas:** `react-leaflet`, `leaflet`, `leaflet-color-markers`.
+*   **Estilos:** `tailwindcss`, `lucide-react` (iconos).
+*   **UI:** Componentes modulares, Glassmorphism, animaciones CSS.
 
-### 📂 `frontend/`
-Aplicación web construida con **React (Vite)**.
-*   **Librerías clave:** `react-leaflet` (mapas), `lucide-react` (iconos), `axios` (peticiones API), `tailwindcss` (estilos).
-
-### 📂 `backend/`
-API RESTful construida con **FastAPI (Python)**.
-*   **Funciones:** Proxy reverso para evitar CORS con el ECU911, normalización de datos y limpieza de texto.
-*   **Librerías clave:** `fastapi`, `uvicorn`, `requests`, `pydantic`.
+### 📂 `backend/` (FastAPI)
+*   **API:** FastAPI (Python 3.10+).
+*   **Servidor:** Uvicorn (Dev), Gunicorn (Prod).
+*   **Datos:** Pydantic (Validación), SQLAlchemy (ORM).
+*   **Integración:** Requests (ECU911 Proxy), GeoJSON processing.
 
 ---
 
-## 🚀 Guía de Instalación
+## 🚀 Guía de Instalación Local
 
-Sigue estos pasos para levantar el proyecto en tu máquina local.
+Sigue estos pasos para levantar el proyecto en tu máquina.
 
 ### Prerrequisitos
-*   Node.js (v18 o superior)
-*   Python (v3.10 o superior)
+*   Node.js (v18+)
+*   Python (v3.10+)
 *   Git
 
 ### 1. Clonar el repositorio
@@ -52,39 +64,43 @@ cd Vialert-EC
 ```
 
 ### 2. Configurar el Backend
-
 ```bash
 cd backend
 # Crear entorno virtual
 python -m venv venv
 
-# Activar entorno (Windows)
+# Activar (Windows)
 .\venv\Scripts\activate
-# Activar entorno (Mac/Linux)
+# Activar (Mac/Linux)
 # source venv/bin/activate
 
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Correr el servidor
+# Correr servidor (Dev)
 python -m uvicorn app.main:app --reload
 ```
-*El backend correrá en `http://localhost:8000`*
+*Backend corre en: `http://localhost:8000`*
 
 ### 3. Configurar el Frontend
-
-Abre una nueva terminal en la raíz del proyecto:
-
 ```bash
 cd frontend
-
-# Instalar dependencias
 npm install
-
-# Correr el servidor de desarrollo
 npm run dev
 ```
-*El frontend correrá en `http://localhost:5173`*
+*Frontend corre en: `http://localhost:5173`*
+
+---
+
+## ☁️ Despliegue (Producción)
+
+### Backend (Render/Railway)
+El proyecto está configurado para **Render**:
+1.  Archivo `Procfile` incluido para Gunicorn.
+2.  Archivo `runtime.txt` para versión de Python.
+3.  Variables de Entorno requeridas:
+    *   `DATABASE_URL`: String de conexión a PostgreSQL (ej: Neon.tech).
+    *   `ECU911_URL`: `https://www.ecu911.gob.ec`
 
 ---
 
