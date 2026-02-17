@@ -96,6 +96,7 @@ export const CANTON_COORDINATES = {
     'TULCAN': { lat: 0.8119, lng: -77.7173 }
 };
 
+// Centro de Ecuador (Latitud, Longitud)
 export const DEFAULT_ECUADOR_CENTER = [-1.8312, -78.1834];
 
 export const getCantonCoordinates = (cantonName) => {

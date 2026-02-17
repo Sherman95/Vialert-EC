@@ -47,23 +47,50 @@ export const ViaMap = ({ vias, interactive, selectedProvince }) => {
         const map = useMap();
 
         useEffect(() => {
-            if (data && selected && selected !== 'TODAS') {
-                const selectedFeature = data.features.find(
-                    f => f.properties.dpa_despro.toUpperCase().includes(selected.toUpperCase()) ||
-                        selected.toUpperCase().includes(f.properties.dpa_despro.toUpperCase())
-                );
+            try {
+                if (data && selected && selected !== 'TODAS') {
+                    const selectedFeature = data.features.find(
+                        f => f.properties.dpa_despro.toUpperCase().includes(selected.toUpperCase()) ||
+                            selected.toUpperCase().includes(f.properties.dpa_despro.toUpperCase())
+                    );
 
-                if (selectedFeature) {
-                    // Crear capa temporal para obtener bounds
-                    const layer = L.geoJSON(selectedFeature);
-                    const bounds = layer.getBounds();
+                    if (selectedFeature) {
+                        try {
+                            // Crear capa temporal para obtener bounds
+                            const layer = L.geoJSON(selectedFeature);
+                            const bounds = layer.getBounds();
 
-                    if (bounds.isValid()) {
-                        map.flyToBounds(bounds, { padding: [20, 20], duration: 1.5 });
+                            if (bounds && bounds.isValid()) {
+                                const center = bounds.getCenter();
+                                if (!isNaN(center.lat) && !isNaN(center.lng)) {
+                                    map.flyToBounds(bounds, { padding: [20, 20], duration: 1.5 });
+                                } else {
+                                    console.warn("Calculated center is NaN", center);
+                                }
+                            } else {
+                                console.warn("Invalid bounds for feature", selectedFeature);
+                            }
+                        } catch (err) {
+                            console.error("Error analyzing bounds:", err);
+                        }
+                    }
+                } else if ((selected === 'TODAS' || !selected)) {
+                    // DEFAULT_ECUADOR_CENTER Validation
+                    if (DEFAULT_ECUADOR_CENTER &&
+                        Array.isArray(DEFAULT_ECUADOR_CENTER) &&
+                        DEFAULT_ECUADOR_CENTER.length === 2 &&
+                        !isNaN(DEFAULT_ECUADOR_CENTER[0]) &&
+                        !isNaN(DEFAULT_ECUADOR_CENTER[1])) {
+
+                        map.flyTo(DEFAULT_ECUADOR_CENTER, 7, { duration: 1.5 });
+                    } else {
+                        console.error("Invalid DEFAULT_ECUADOR_CENTER:", DEFAULT_ECUADOR_CENTER);
+                        // Fallback hardcoded
+                        map.flyTo([-1.8312, -78.1834], 7, { duration: 1.5 });
                     }
                 }
-            } else if (selected === 'TODAS' || !selected) {
-                map.flyTo(DEFAULT_ECUADOR_CENTER, 7, { duration: 1.5 });
+            } catch (error) {
+                console.error("CRITICAL MAP ERROR in ProvinceHighlighter:", error);
             }
         }, [data, selected, map]);
 

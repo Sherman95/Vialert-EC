@@ -20,7 +20,10 @@ else:
     connect_args = {}
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args=connect_args,
+    pool_pre_ping=True,  # Verifica la conexión antes de usarla (evita SSL closed)
+    pool_recycle=300     # Recicla conexiones cada 5 minutos
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

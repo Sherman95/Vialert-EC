@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { RefreshCw, Map as MapIcon, Plus, List, Search, Filter } from 'lucide-react';
+import { RefreshCw, Map as MapIcon, Plus, List, Search, Filter, Minimize2, Maximize2, MapPin, AlertTriangle } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import ViaCard from '../components/ui/ViaCard';
 import { Filters } from '../components/ui/Filters';
 import { StatsGrid } from '../components/ui/StatsGrid';
 import { ViaMap } from '../components/ui/ViaMap';
 import { ReportModal } from '../components/ui/ReportModal';
+import { MobileHeader } from '../components/mobile/MobileHeader';
 import { useVias } from '../hooks/useVias';
 
 export const HomePage = () => {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    const [mobileView, setMobileView] = useState('list'); // 'list' | 'map'
+    // Estado para el mapa en móvil
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+
     const {
         vias,
         stats,
@@ -18,122 +21,150 @@ export const HomePage = () => {
         loading,
         error,
         filters,
-        refresh
+        refresh,
+        setFilters,
+        uniqueProvincias,
+        isLoading,
+        filteredVias
     } = useVias();
 
     return (
-        <div className="h-screen bg-slate-50 flex flex-col lg:flex-row overflow-hidden font-sans text-slate-900">
+        <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
 
-            {/* --- PANEL IZQUIERDO (SIDEBAR) --- */}
-            <aside className={`w-full lg:w-[480px] xl:w-[500px] flex flex-col bg-white border-r border-slate-200 z-20 shadow-xl lg:h-full relative transition-transform duration-300 ${mobileView === 'map' ? 'hidden lg:flex' : 'flex h-full'}`}>
+            {/* --- MOBILE VIEW (xs/sm) --- */}
+            <div className="md:hidden flex flex-col h-full relative">
+                {/* 1. Mobile Header (Sticky) */}
+                <MobileHeader
+                    searchTerm={filters.searchTerm}
+                    setSearchTerm={(term) => setFilters(prev => ({ ...prev, searchTerm: term }))}
+                    filterEstado={filters.filterEstado}
+                    setFilterEstado={(est) => setFilters(prev => ({ ...prev, filterEstado: est }))}
+                    filterProvincia={filters.filterProvincia}
+                    setFilterProvincia={(prov) => setFilters(prev => ({ ...prev, filterProvincia: prov }))}
+                    provincias={uniqueProvincias}
+                />
 
-                {/* Header Compacto */}
-                <header className="p-4 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30">
-                    <Navbar onRefresh={refresh} loading={loading} simpleMode />
-
-                    {/* Mobile Tabs */}
-                    <div className="mt-4 flex lg:hidden bg-slate-100 p-1 rounded-xl">
-                        <button
-                            onClick={() => setMobileView('list')}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${mobileView === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
-                        >
-                            <List size={14} /> Lista
-                        </button>
-                        <button
-                            onClick={() => setMobileView('map')}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${mobileView === 'map' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
-                        >
-                            <MapIcon size={14} /> Mapa
-                        </button>
-                    </div>
-
-                    {/* Buscador & Stats Mini */}
-                    <div className="mt-4 space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-3 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all"
-                                placeholder="Buscar vía, cantón o incidente..."
-                                value={filters.searchTerm}
-                                onChange={(e) => filters.setSearchTerm(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                            <Filters
-                                filterEstado={filters.filterEstado}
-                                setFilterEstado={filters.setFilterEstado}
-                                filterProvincia={filters.filterProvincia}
-                                setFilterProvincia={filters.setFilterProvincia}
-                                provincias={provinciasDisponibles}
-                                compact
-                            />
-                        </div>
-                    </div>
-                </header>
-
-                {/* Lista Scrollable */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-
-                    {/* Stats Resumen (Solo si no hay búsqueda activa para no estorbar) */}
-                    {!filters.searchTerm && (
-                        <div className="mb-2">
-                            <StatsGrid stats={stats} />
-                        </div>
-                    )}
-
-                    <div className="flex items-center justify-between px-1">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                            {vias.length} Reportes Activos
-                        </h3>
-                        {error && <span className="text-xs text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded">Error de conexión</span>}
-                    </div>
-
-                    {/* Empty State */}
-                    {!loading && vias.length === 0 && (
-                        <div className="group relative">
-                            <div className="absolute -top-3 left-6 z-[1000] bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                                Vista Satelital Operativa
-                            </div>
-                            <ViaMap vias={vias} selectedProvince={filters.filterProvincia} />
-                        </div>
-                    )}
-
-                    {/* Lista de Tarjetas */}
-                    <div className="space-y-4 pb-20 lg:pb-4">
-                        {vias.map((via) => (
-                            <ViaCard key={via.id} via={via} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* FAB (Solo visible en desktop o lista móvil) */}
-                <button
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="absolute bottom-6 right-6 lg:bottom-8 lg:right-8 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3.5 lg:p-4 rounded-full shadow-lg shadow-blue-500/30 hover:scale-110 transition-all active:scale-95 group"
-                    title="Reportar Incidente"
-                >
-                    <Plus size={24} className="group-hover:rotate-90 transition-transform" />
-                </button>
-            </aside>
-
-            {/* --- MAPA (DERECHA / FULL MOBILE) --- */}
-            <main className={`flex-1 relative bg-slate-100 ${mobileView === 'list' ? 'hidden lg:block' : 'block h-full'}`}>
-                {/* Botón Volver a Lista (Solo Móvil) */}
-                <button
-                    onClick={() => setMobileView('list')}
-                    className="absolute top-4 left-4 z-[1000] lg:hidden bg-white text-slate-700 p-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2"
-                >
-                    <List size={16} /> Volver a Lista
-                </button>
-
-                <div className="w-full h-full">
+                {/* 2. Collapsible Map */}
+                <div className={`relative transition-all duration-300 ease-in-out shrink-0 ${isMapExpanded ? 'h-[60vh] z-40' : 'h-[25vh] z-0'}`}>
                     <ViaMap vias={vias} interactive selectedProvince={filters.filterProvincia} />
-                </div>
-            </main>
 
-            {/* Modal */}
+                    {/* Botón Expandir/Contraer Map */}
+                    <button
+                        onClick={() => setIsMapExpanded(!isMapExpanded)}
+                        className="absolute bottom-2 right-2 z-[400] bg-white/90 backdrop-blur p-2 rounded-full shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-transform active:scale-95"
+                    >
+                        {isMapExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                    </button>
+                </div>
+
+                {/* 3. Lista Scrollable */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24 bg-slate-50">
+                    {/* Stats Resumen (Compacto Mobile) */}
+                    <div className="grid grid-cols-3 gap-2 mb-1">
+                        <div className="bg-red-50 p-2 rounded-lg text-center border border-red-100 flex flex-col items-center justify-center">
+                            <span className="block text-lg font-bold text-red-600 leading-none">{stats.cerradas}</span>
+                            <span className="text-[9px] uppercase font-bold text-red-400 mt-1">Cerradas</span>
+                        </div>
+                        <div className="bg-yellow-50 p-2 rounded-lg text-center border border-yellow-100 flex flex-col items-center justify-center">
+                            <span className="block text-lg font-bold text-yellow-600 leading-none">{stats.parciales}</span>
+                            <span className="text-[9px] uppercase font-bold text-yellow-400 mt-1">Parciales</span>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded-lg text-center border border-blue-100 flex flex-col items-center justify-center">
+                            <span className="block text-lg font-bold text-blue-600 leading-none">{stats.total}</span>
+                            <span className="text-[9px] uppercase font-bold text-blue-400 mt-1">Total</span>
+                        </div>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="p-8 text-center text-slate-400 animate-pulse">Cargando vías...</div>
+                    ) : filteredVias.length === 0 ? (
+                        <div className="p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 mt-4">
+                            <MapPin size={32} className="mx-auto text-slate-300 mb-2" />
+                            <p className="text-slate-500 font-medium">No se encontraron vías</p>
+                            <button
+                                onClick={() => setFilters(prev => ({ ...prev, searchTerm: '', filterEstado: 'TODAS', filterProvincia: 'TODAS' }))}
+                                className="mt-2 text-blue-500 text-sm font-bold"
+                            >
+                                Limpiar filtros
+                            </button>
+                        </div>
+                    ) : (
+                        filteredVias.map(via => (
+                            <ViaCard key={via.id} via={via} variant="compact" />
+                        ))
+                    )}
+                </div>
+
+                {/* 4. FAB - Action Button */}
+                <div className="absolute bottom-6 right-6 z-50">
+                    <button
+                        onClick={() => setIsReportModalOpen(true)}
+                        className="bg-slate-900 hover:bg-black text-white p-4 rounded-full shadow-xl shadow-slate-900/30 active:scale-95 transition-all flex items-center justify-center"
+                    >
+                        <AlertTriangle size={24} />
+                    </button>
+                </div>
+            </div>
+
+            {/* --- DESKTOP VIEW (md/lg) --- */}
+            <div className="hidden md:flex flex-row h-full">
+                {/* Sidebar Izquierdo */}
+                <div className="w-[450px] flex flex-col border-r border-slate-200 bg-white z-20 shadow-xl relative">
+                    <Navbar onRefresh={refresh} loading={isLoading} />
+
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+                        <StatsGrid stats={stats} />
+
+                        <div className="my-6">
+                            <Filters
+                                filterEstado={filters.filterEstado} setFilterEstado={(e) => setFilters(prev => ({ ...prev, filterEstado: e }))}
+                                filterProvincia={filters.filterProvincia} setFilterProvincia={(p) => setFilters(prev => ({ ...prev, filterProvincia: p }))}
+                                provincias={uniqueProvincias}
+                                searchTerm={filters.searchTerm} setSearchTerm={(t) => setFilters(prev => ({ ...prev, searchTerm: t }))}
+                            />
+                        </div>
+
+                        <div className="space-y-4 pb-20">
+                            {isLoading ? (
+                                <p className="text-center text-slate-500 py-10">Cargando datos en tiempo real...</p>
+                            ) : filteredVias.length > 0 ? (
+                                filteredVias.map((via) => (
+                                    <ViaCard key={via.id} via={via} />
+                                ))
+                            ) : (
+                                <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-slate-200">
+                                    <MapPin size={48} className="mx-auto text-slate-300 mb-3" />
+                                    <p className="text-slate-500 font-medium">No hay vías con estos filtros</p>
+                                    <button
+                                        onClick={() => setFilters(prev => ({ ...prev, searchTerm: '', filterEstado: 'TODAS', filterProvincia: 'TODAS' }))}
+                                        className="mt-3 text-blue-500 text-sm font-semibold hover:underline"
+                                    >
+                                        Limpiar búsqueda
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mapa Derecho */}
+                <div className="flex-1 relative bg-slate-100">
+                    <ViaMap vias={vias} interactive selectedProvince={filters.filterProvincia} />
+
+                    {/* Botón flotante desktop */}
+                    <div className="absolute bottom-8 right-8 z-[1000]">
+                        <button
+                            onClick={() => setIsReportModalOpen(true)}
+                            className="bg-white hover:bg-slate-50 text-slate-800 px-6 py-3 rounded-full shadow-lg border border-slate-200 font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95"
+                        >
+                            <AlertTriangle size={20} className="text-amber-500" />
+                            Reportar Incidente
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modal Global */}
             <ReportModal
                 isOpen={isReportModalOpen}
                 onClose={() => setIsReportModalOpen(false)}

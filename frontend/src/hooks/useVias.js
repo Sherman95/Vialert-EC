@@ -4,12 +4,14 @@ import { viasService, reportsService } from '../services/api';
 
 export const useVias = () => {
     // Estados para los filtros (UI State) se mantienen locales
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterEstado, setFilterEstado] = useState('TODAS');
-    const [filterProvincia, setFilterProvincia] = useState('TODAS');
+    const [filters, setFilters] = useState({
+        searchTerm: '',
+        filterEstado: 'TODAS',
+        filterProvincia: 'TODAS'
+    });
 
     // React Query para cargar datos (Server State)
-    const { data: vias = [], isLoading: loading, error, refetch } = useQuery({
+    const { data: rawVias = [], isLoading, error, refetch } = useQuery({
         queryKey: ['vias'],
         queryFn: async () => {
             // Cargar datos oficiales y de usuarios en paralelo
@@ -43,11 +45,11 @@ export const useVias = () => {
 
     // Lógica de Filtrado (Se mantiene igual, operando sobre 'vias')
     const filteredVias = useMemo(() => {
-        let resultado = vias;
+        let resultado = rawVias;
 
         // 1. Filtrar por Buscador (Texto)
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
+        if (filters.searchTerm) {
+            const term = filters.searchTerm.toLowerCase();
             resultado = resultado.filter(via =>
                 via.provincia.toLowerCase().includes(term) ||
                 via.nombre_via.toLowerCase().includes(term) ||
@@ -56,44 +58,44 @@ export const useVias = () => {
         }
 
         // 2. Filtrar por Estado (Dropdown)
-        if (filterEstado !== 'TODAS') {
-            resultado = resultado.filter(via => via.estado_codigo === filterEstado);
+        if (filters.filterEstado !== 'TODAS') {
+            resultado = resultado.filter(via => via.estado_codigo === filters.filterEstado);
         }
 
         // 3. Filtrar por Provincia (Dropdown)
-        if (filterProvincia !== 'TODAS') {
-            resultado = resultado.filter(via => via.provincia === filterProvincia);
+        if (filters.filterProvincia !== 'TODAS') {
+            resultado = resultado.filter(via => via.provincia === filters.filterProvincia);
         }
 
         return resultado;
-    }, [vias, searchTerm, filterEstado, filterProvincia]);
+    }, [rawVias, filters]);
 
     // Extraer lista única de provincias desde la data ya combinada
-    const provinciasDisponibles = useMemo(() => {
-        const provincias = vias.map(v => v.provincia);
+    const uniqueProvincias = useMemo(() => {
+        const provincias = rawVias.map(v => v.provincia);
         return [...new Set(provincias)].sort();
-    }, [vias]);
+    }, [rawVias]);
 
     // Contadores basados en 'vias' (data completa, no filtrada)
     const stats = useMemo(() => ({
-        total: vias.length,
-        cerradas: vias.filter(v => v.estado_codigo === 'CERRADA').length,
-        parciales: vias.filter(v => v.estado_codigo === 'PARCIAL').length,
-        habilitadas: vias.filter(v => v.estado_codigo === 'HABILITADA').length,
-        reportes: vias.filter(v => v.estado_codigo === 'REPORTE').length
-    }), [vias]);
+        total: rawVias.length,
+        cerradas: rawVias.filter(v => v.estado_codigo === 'CERRADA').length,
+        parciales: rawVias.filter(v => v.estado_codigo === 'PARCIAL').length,
+        habilitadas: rawVias.filter(v => v.estado_codigo === 'HABILITADA').length,
+        reportes: rawVias.filter(v => v.estado_codigo === 'REPORTE').length
+    }), [rawVias]);
 
     return {
-        vias: filteredVias,
+        vias: rawVias, // Data cruda (para mapa etc si se necesita todo)
+        filteredVias, // Data filtrada (para lista)
         stats,
-        provinciasDisponibles,
-        loading,
+        uniqueProvincias,
+        provinciasDisponibles: uniqueProvincias, // alias legacy
+        isLoading,
+        loading: isLoading, // alias legacy
         error: error ? 'Error conectando al servidor' : null,
-        filters: {
-            searchTerm, setSearchTerm,
-            filterEstado, setFilterEstado,
-            filterProvincia, setFilterProvincia
-        },
+        filters,
+        setFilters,
         refresh: refetch
     };
 };
