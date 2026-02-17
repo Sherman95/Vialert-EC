@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configuración centralizada de Axios
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8000', // Tu backend Python
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', // Producción vs Desarrollo
     timeout: 15000, // Esperar máximo 15 segundos
     headers: {
         'Content-Type': 'application/json',
