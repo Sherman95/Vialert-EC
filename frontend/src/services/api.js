@@ -3,7 +3,7 @@ import axios from 'axios';
 // Configuración centralizada de Axios
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', // Producción vs Desarrollo
-    timeout: 15000, // Esperar máximo 15 segundos
+    timeout: 60000, // Tolerar el cold start del servidor gratuito de Render
     headers: {
         'Content-Type': 'application/json',
     },

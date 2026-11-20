@@ -31,6 +31,86 @@ const icons = {
 // URL de GeoJSON de Ecuador (Provincias)
 const ECUADOR_GEOJSON_URL = "https://raw.githubusercontent.com/jpmarindiaz/geo-collection/master/ecu/ecuador.geojson";
 
+const hasFiniteCoordinates = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng);
+
+const findSelectedFeature = (data, selected) => {
+    if (!Array.isArray(data?.features) || !selected || selected === 'TODAS') return null;
+
+    const selectedName = selected.toUpperCase();
+    return data.features.find(feature => {
+        const provinceName = feature?.properties?.dpa_despro;
+        if (typeof provinceName !== 'string') return false;
+
+        const normalizedProvinceName = provinceName.toUpperCase();
+        return normalizedProvinceName.includes(selectedName) ||
+            selectedName.includes(normalizedProvinceName);
+    }) || null;
+};
+
+// Se mantiene fuera de ViaMap para evitar remontajes y nuevas animaciones en cada render.
+const ProvinceHighlighter = ({ data, selected }) => {
+    const map = useMap();
+    const selectedFeature = useMemo(
+        () => findSelectedFeature(data, selected),
+        [data, selected]
+    );
+
+    useEffect(() => {
+        try {
+            if (selectedFeature) {
+                const layer = L.geoJSON(selectedFeature);
+                const bounds = layer.getBounds();
+
+                if (!bounds?.isValid()) {
+                    console.warn("Invalid bounds for feature", selectedFeature);
+                    return undefined;
+                }
+
+                const center = bounds.getCenter();
+                if (!hasFiniteCoordinates(center.lat, center.lng)) {
+                    console.warn("Calculated center is invalid", center);
+                    return undefined;
+                }
+
+                map.stop();
+                map.flyToBounds(bounds, { padding: [20, 20], duration: 1.5 });
+            } else if (selected === 'TODAS' || !selected) {
+                const [lat, lng] = Array.isArray(DEFAULT_ECUADOR_CENTER)
+                    ? DEFAULT_ECUADOR_CENTER
+                    : [];
+
+                if (hasFiniteCoordinates(lat, lng)) {
+                    map.stop();
+                    map.flyTo([lat, lng], 7, { duration: 1.5 });
+                } else {
+                    const fallbackCenter = [-1.8312, -78.1834];
+                    console.error("Invalid DEFAULT_ECUADOR_CENTER:", DEFAULT_ECUADOR_CENTER);
+                    map.stop();
+                    map.flyTo(fallbackCenter, 7, { duration: 1.5 });
+                }
+            }
+        } catch (error) {
+            console.error("CRITICAL MAP ERROR in ProvinceHighlighter:", error);
+        }
+
+        return () => map.stop();
+    }, [map, selected, selectedFeature]);
+
+    return selectedFeature ? (
+        <GeoJSON
+            key={selected}
+            data={selectedFeature}
+            style={{
+                color: '#3b82f6',
+                weight: 3,
+                opacity: 0.8,
+                fillColor: '#3b82f6',
+                fillOpacity: 0.1
+            }}
+        />
+    ) : null;
+};
+
 export const ViaMap = ({ vias, interactive, selectedProvince }) => {
     const [geoJsonData, setGeoJsonData] = useState(null);
 
@@ -42,84 +122,12 @@ export const ViaMap = ({ vias, interactive, selectedProvince }) => {
             .catch(err => console.error("Error cargando mapa:", err));
     }, []);
 
-    // Componente para manejar el Zoom dinámico y el filtrado
-    const ProvinceHighlighter = ({ data, selected }) => {
-        const map = useMap();
-
-        useEffect(() => {
-            try {
-                if (data && selected && selected !== 'TODAS') {
-                    const selectedFeature = data.features.find(
-                        f => f.properties.dpa_despro.toUpperCase().includes(selected.toUpperCase()) ||
-                            selected.toUpperCase().includes(f.properties.dpa_despro.toUpperCase())
-                    );
-
-                    if (selectedFeature) {
-                        try {
-                            // Crear capa temporal para obtener bounds
-                            const layer = L.geoJSON(selectedFeature);
-                            const bounds = layer.getBounds();
-
-                            if (bounds && bounds.isValid()) {
-                                const center = bounds.getCenter();
-                                if (!isNaN(center.lat) && !isNaN(center.lng)) {
-                                    map.flyToBounds(bounds, { padding: [20, 20], duration: 1.5 });
-                                } else {
-                                    console.warn("Calculated center is NaN", center);
-                                }
-                            } else {
-                                console.warn("Invalid bounds for feature", selectedFeature);
-                            }
-                        } catch (err) {
-                            console.error("Error analyzing bounds:", err);
-                        }
-                    }
-                } else if ((selected === 'TODAS' || !selected)) {
-                    // DEFAULT_ECUADOR_CENTER Validation
-                    if (DEFAULT_ECUADOR_CENTER &&
-                        Array.isArray(DEFAULT_ECUADOR_CENTER) &&
-                        DEFAULT_ECUADOR_CENTER.length === 2 &&
-                        !isNaN(DEFAULT_ECUADOR_CENTER[0]) &&
-                        !isNaN(DEFAULT_ECUADOR_CENTER[1])) {
-
-                        map.flyTo(DEFAULT_ECUADOR_CENTER, 7, { duration: 1.5 });
-                    } else {
-                        console.error("Invalid DEFAULT_ECUADOR_CENTER:", DEFAULT_ECUADOR_CENTER);
-                        // Fallback hardcoded
-                        map.flyTo([-1.8312, -78.1834], 7, { duration: 1.5 });
-                    }
-                }
-            } catch (error) {
-                console.error("CRITICAL MAP ERROR in ProvinceHighlighter:", error);
-            }
-        }, [data, selected, map]);
-
-        if (!data || !selected || selected === 'TODAS') return null;
-
-        const selectedFeature = data.features.find(
-            f => f.properties.dpa_despro.toUpperCase().includes(selected.toUpperCase()) ||
-                selected.toUpperCase().includes(f.properties.dpa_despro.toUpperCase())
-        );
-
-        return selectedFeature ? (
-            <GeoJSON
-                key={selected} // Forzar re-render al cambiar provincia
-                data={selectedFeature}
-                style={{
-                    color: '#3b82f6', // Blue color for border
-                    weight: 3,
-                    opacity: 0.8,
-                    fillColor: '#3b82f6',
-                    fillOpacity: 0.1
-                }}
-            />
-        ) : null;
-    };
-
     const markers = useMemo(() => {
         return vias.map(via => {
             // 1. Si es reporte de usuario, tiene coordenadas exactas
-            if (via.isUserReport && via.coordenadas) {
+            if (via.isUserReport &&
+                via.coordenadas &&
+                hasFiniteCoordinates(via.coordenadas.lat, via.coordenadas.lng)) {
                 return { ...via, lat: via.coordenadas.lat, lng: via.coordenadas.lng, isApprox: false };
             }
 
@@ -138,7 +146,7 @@ export const ViaMap = ({ vias, interactive, selectedProvince }) => {
                 }
             }
             return null;
-        }).filter(m => m !== null);
+        }).filter(marker => marker && hasFiniteCoordinates(marker.lat, marker.lng));
     }, [vias]);
 
     const getIconForVia = (via) => {
