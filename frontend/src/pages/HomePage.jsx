@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { RefreshCw, Map as MapIcon, Plus, List, Search, Filter, Minimize2, Maximize2, MapPin, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+    TriangleAlert,
+    Maximize2,
+    Minimize2,
+    MapPin,
+    ListFilter,
+    Radio,
+    Info,
+} from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import ViaCard from '../components/ui/ViaCard';
 import { Filters } from '../components/ui/Filters';
@@ -11,165 +19,174 @@ import { useVias } from '../hooks/useVias';
 
 export const HomePage = () => {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    // Estado para el mapa en móvil
     const [isMapExpanded, setIsMapExpanded] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const handleChange = (event) => setIsDesktop(event.matches);
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, []);
 
     const {
-        vias,
         stats,
-        provinciasDisponibles,
-        loading,
         error,
         filters,
         refresh,
         setFilters,
         uniqueProvincias,
         isLoading,
-        filteredVias
+        isFetching,
+        dataUpdatedAt,
+        filteredVias,
     } = useVias();
 
+    const setFilter = (key, value) => {
+        setFilters((current) => ({ ...current, [key]: value }));
+    };
+
+    const clearFilters = () => {
+        setFilters({ searchTerm: '', filterEstado: 'TODAS', filterProvincia: 'TODAS' });
+    };
+
     return (
-        <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
+        <div className="flex h-dvh min-h-[560px] flex-col overflow-hidden bg-[#edf1f3] text-slate-900">
+            <Navbar onRefresh={refresh} loading={isFetching} updatedAt={dataUpdatedAt} />
 
-            {/* --- MOBILE VIEW (xs/sm) --- */}
-            <div className="md:hidden flex flex-col h-full relative">
-                {/* 1. Mobile Header (Sticky) */}
-                <MobileHeader
-                    searchTerm={filters.searchTerm}
-                    setSearchTerm={(term) => setFilters(prev => ({ ...prev, searchTerm: term }))}
-                    filterEstado={filters.filterEstado}
-                    setFilterEstado={(est) => setFilters(prev => ({ ...prev, filterEstado: est }))}
-                    filterProvincia={filters.filterProvincia}
-                    setFilterProvincia={(prov) => setFilters(prev => ({ ...prev, filterProvincia: prov }))}
-                    provincias={uniqueProvincias}
-                />
-
-                {/* 2. Collapsible Map */}
-                <div className={`relative transition-all duration-300 ease-in-out shrink-0 ${isMapExpanded ? 'h-[60vh] z-40' : 'h-[25vh] z-0'}`}>
-                    <ViaMap vias={vias} interactive selectedProvince={filters.filterProvincia} />
-
-                    {/* Botón Expandir/Contraer Map */}
-                    <button
-                        onClick={() => setIsMapExpanded(!isMapExpanded)}
-                        className="absolute bottom-2 right-2 z-[400] bg-white/90 backdrop-blur p-2 rounded-full shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-transform active:scale-95"
-                    >
-                        {isMapExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-                    </button>
-                </div>
-
-                {/* 3. Lista Scrollable */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24 bg-slate-50">
-                    {/* Stats Resumen (Compacto Mobile) */}
-                    <div className="grid grid-cols-3 gap-2 mb-1">
-                        <div className="bg-red-50 p-2 rounded-lg text-center border border-red-100 flex flex-col items-center justify-center">
-                            <span className="block text-lg font-bold text-red-600 leading-none">{stats.cerradas}</span>
-                            <span className="text-[9px] uppercase font-bold text-red-400 mt-1">Cerradas</span>
-                        </div>
-                        <div className="bg-yellow-50 p-2 rounded-lg text-center border border-yellow-100 flex flex-col items-center justify-center">
-                            <span className="block text-lg font-bold text-yellow-600 leading-none">{stats.parciales}</span>
-                            <span className="text-[9px] uppercase font-bold text-yellow-400 mt-1">Parciales</span>
-                        </div>
-                        <div className="bg-blue-50 p-2 rounded-lg text-center border border-blue-100 flex flex-col items-center justify-center">
-                            <span className="block text-lg font-bold text-blue-600 leading-none">{stats.total}</span>
-                            <span className="text-[9px] uppercase font-bold text-blue-400 mt-1">Total</span>
-                        </div>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="p-8 text-center text-slate-400 animate-pulse">Cargando vías...</div>
-                    ) : filteredVias.length === 0 ? (
-                        <div className="p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 mt-4">
-                            <MapPin size={32} className="mx-auto text-slate-300 mb-2" />
-                            <p className="text-slate-500 font-medium">No se encontraron vías</p>
-                            <button
-                                onClick={() => setFilters(prev => ({ ...prev, searchTerm: '', filterEstado: 'TODAS', filterProvincia: 'TODAS' }))}
-                                className="mt-2 text-blue-500 text-sm font-bold"
-                            >
-                                Limpiar filtros
-                            </button>
-                        </div>
-                    ) : (
-                        filteredVias.map(via => (
-                            <ViaCard key={via.id} via={via} variant="compact" />
-                        ))
-                    )}
-                </div>
-
-                {/* 4. FAB - Action Button */}
-                <div className="absolute bottom-6 right-6 z-50">
-                    <button
-                        onClick={() => setIsReportModalOpen(true)}
-                        className="bg-slate-900 hover:bg-black text-white p-4 rounded-full shadow-xl shadow-slate-900/30 active:scale-95 transition-all flex items-center justify-center"
-                    >
-                        <AlertTriangle size={24} />
-                    </button>
-                </div>
-            </div>
-
-            {/* --- DESKTOP VIEW (md/lg) --- */}
-            <div className="hidden md:flex flex-row h-full">
-                {/* Sidebar Izquierdo */}
-                <div className="w-[450px] flex flex-col border-r border-slate-200 bg-white z-20 shadow-xl relative">
-                    <Navbar onRefresh={refresh} loading={isLoading} />
-
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+            <main className="relative flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[minmax(380px,440px)_1fr]">
+                <aside className={`${isMapExpanded ? 'hidden' : 'flex'} order-2 min-h-0 flex-1 flex-col border-r border-slate-200 bg-[#f5f7f8] md:order-1 md:flex`}>
+                    <div className="flex-1 overflow-y-auto p-3 pb-24 sm:p-4 md:p-5 md:pb-8 custom-scrollbar">
                         <StatsGrid stats={stats} />
 
-                        <div className="my-6">
-                            <Filters
-                                filterEstado={filters.filterEstado} setFilterEstado={(e) => setFilters(prev => ({ ...prev, filterEstado: e }))}
-                                filterProvincia={filters.filterProvincia} setFilterProvincia={(p) => setFilters(prev => ({ ...prev, filterProvincia: p }))}
+                        <div className="mt-4 md:hidden">
+                            <MobileHeader
+                                searchTerm={filters.searchTerm}
+                                setSearchTerm={(value) => setFilter('searchTerm', value)}
+                                filterEstado={filters.filterEstado}
+                                setFilterEstado={(value) => setFilter('filterEstado', value)}
+                                filterProvincia={filters.filterProvincia}
+                                setFilterProvincia={(value) => setFilter('filterProvincia', value)}
                                 provincias={uniqueProvincias}
-                                searchTerm={filters.searchTerm} setSearchTerm={(t) => setFilters(prev => ({ ...prev, searchTerm: t }))}
                             />
                         </div>
 
-                        <div className="space-y-4 pb-20">
+                        <div className="mt-4 hidden md:block">
+                            <Filters
+                                filterEstado={filters.filterEstado}
+                                setFilterEstado={(value) => setFilter('filterEstado', value)}
+                                filterProvincia={filters.filterProvincia}
+                                setFilterProvincia={(value) => setFilter('filterProvincia', value)}
+                                provincias={uniqueProvincias}
+                                searchTerm={filters.searchTerm}
+                                setSearchTerm={(value) => setFilter('searchTerm', value)}
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="mt-4 flex gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900" role="alert">
+                                <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+                                <div>
+                                    <p className="font-bold">No fue posible actualizar la fuente oficial.</p>
+                                    <button type="button" onClick={refresh} className="mt-1 font-bold underline underline-offset-2">
+                                        Reintentar conexión
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mb-3 mt-5 flex items-center justify-between gap-3">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <ListFilter size={17} className="text-slate-500" aria-hidden="true" />
+                                    <h2 className="text-sm font-extrabold uppercase tracking-[0.08em] text-slate-700">
+                                        Estado de vías
+                                    </h2>
+                                </div>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    {isLoading ? 'Consultando información…' : `${filteredVias.length} resultados visibles`}
+                                </p>
+                            </div>
+                            {isFetching && !isLoading && (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1f5673]">
+                                    <Radio size={13} className="animate-pulse" aria-hidden="true" />
+                                    Sincronizando
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="space-y-3">
                             {isLoading ? (
-                                <p className="text-center text-slate-500 py-10">Cargando datos en tiempo real...</p>
+                                Array.from({ length: 3 }, (_, index) => (
+                                    <div key={index} className="h-32 animate-pulse rounded-xl border border-slate-200 bg-white" />
+                                ))
                             ) : filteredVias.length > 0 ? (
-                                filteredVias.map((via) => (
-                                    <ViaCard key={via.id} via={via} />
+                                filteredVias.map((road) => (
+                                    <ViaCard key={road.id} via={road} variant={isDesktop ? 'full' : 'compact'} />
                                 ))
                             ) : (
-                                <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-slate-200">
-                                    <MapPin size={48} className="mx-auto text-slate-300 mb-3" />
-                                    <p className="text-slate-500 font-medium">No hay vías con estos filtros</p>
+                                <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center">
+                                    <MapPin size={34} className="mx-auto text-slate-400" aria-hidden="true" />
+                                    <h3 className="mt-3 text-base font-extrabold text-slate-800">No encontramos coincidencias</h3>
+                                    <p className="mx-auto mt-1 max-w-xs text-sm leading-5 text-slate-500">
+                                        Ajusta la búsqueda o restablece los filtros para ver todos los registros.
+                                    </p>
                                     <button
-                                        onClick={() => setFilters(prev => ({ ...prev, searchTerm: '', filterEstado: 'TODAS', filterProvincia: 'TODAS' }))}
-                                        className="mt-3 text-blue-500 text-sm font-semibold hover:underline"
+                                        type="button"
+                                        onClick={clearFilters}
+                                        className="mt-4 min-h-10 rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50"
                                     >
-                                        Limpiar búsqueda
+                                        Restablecer filtros
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
+                </aside>
 
-                {/* Mapa Derecho */}
-                <div className="flex-1 relative bg-slate-100">
-                    <ViaMap vias={vias} interactive selectedProvince={filters.filterProvincia} />
+                <section className={`relative order-1 shrink-0 overflow-hidden border-b border-slate-300 bg-slate-200 md:order-2 md:h-full md:border-b-0 ${isMapExpanded ? 'h-full flex-1' : 'h-[31dvh] min-h-[230px] max-h-[340px] md:max-h-none'}`}>
+                    <ViaMap vias={filteredVias} selectedProvince={filters.filterProvincia} />
 
-                    {/* Botón flotante desktop */}
-                    <div className="absolute bottom-8 right-8 z-[1000]">
-                        <button
-                            onClick={() => setIsReportModalOpen(true)}
-                            className="bg-white hover:bg-slate-50 text-slate-800 px-6 py-3 rounded-full shadow-lg border border-slate-200 font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95"
-                        >
-                            <AlertTriangle size={20} className="text-amber-500" />
-                            Reportar Incidente
-                        </button>
+                    <div className="pointer-events-none absolute left-3 top-3 z-[500] rounded-lg border border-white/70 bg-white/95 px-3 py-2 shadow-md backdrop-blur sm:left-4 sm:top-4">
+                        <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#153d57]">Red vial nacional</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-600">
+                            {filteredVias.length} registros en el mapa
+                        </p>
                     </div>
-                </div>
-            </div>
 
-            {/* Modal Global */}
+                    <button
+                        type="button"
+                        onClick={() => setIsMapExpanded((current) => !current)}
+                        className="absolute right-3 top-3 z-[500] flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1f5673] md:hidden"
+                        aria-label={isMapExpanded ? 'Contraer mapa' : 'Expandir mapa'}
+                    >
+                        {isMapExpanded ? <Minimize2 size={20} aria-hidden="true" /> : <Maximize2 size={20} aria-hidden="true" />}
+                    </button>
+
+                    <div className="absolute bottom-4 left-4 z-[500] hidden rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur lg:block">
+                        <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-red-700" /> Cerrada</span>
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-amber-600" /> Controlada</span>
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-emerald-700" /> Habilitada</span>
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-sky-700" /> Comunidad</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsReportModalOpen(true)}
+                        className="absolute bottom-4 right-4 z-[500] inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#0b1f33] px-4 text-sm font-extrabold text-white shadow-lg transition hover:bg-[#123b56] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
+                    >
+                        <TriangleAlert size={18} className="text-amber-300" aria-hidden="true" />
+                        Reportar novedad
+                    </button>
+                </section>
+            </main>
+
             <ReportModal
                 isOpen={isReportModalOpen}
                 onClose={() => setIsReportModalOpen(false)}
                 onReportSubmitted={refresh}
-                provincias={provinciasDisponibles}
             />
         </div>
     );

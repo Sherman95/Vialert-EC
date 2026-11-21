@@ -1,67 +1,68 @@
 import React from 'react';
-import { RefreshCw, Radio } from 'lucide-react';
+import { RefreshCw, Radio, ShieldCheck } from 'lucide-react';
 import AppLogo from '../ui/AppLogo';
 
-export const Navbar = ({ onRefresh, loading, simpleMode }) => {
+const formatUpdateTime = (timestamp) => {
+    if (!timestamp) return 'Esperando datos';
+
+    return new Intl.DateTimeFormat('es-EC', {
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(new Date(timestamp));
+};
+
+export const Navbar = ({ onRefresh, loading, updatedAt }) => {
     return (
-        <nav className={`bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-[100] shadow-sm ${simpleMode ? 'shadow-none border-none bg-transparent' : ''}`}>
-            <div className={`max-w-7xl mx-auto ${simpleMode ? 'px-0' : 'px-4 sm:px-6 lg:px-8'}`}>
-                <div className="flex justify-between items-center h-16">
-
-                    {/* Branding con AppLogo */}
-                    <div className="flex items-center gap-3">
-                        <AppLogo className="w-8 h-8 md:w-10 md:h-10" />
-                        <div className="flex flex-col">
-                            <h1 className={`font-black tracking-tight text-slate-900 leading-none ${simpleMode ? 'text-lg' : 'text-xl'}`}>
-                                Vialert<span className="text-blue-600">EC</span>
+        <header className="shrink-0 border-b border-slate-700/70 bg-[#0b1f33] text-white">
+            <div className="flex h-[72px] items-center justify-between gap-4 px-4 sm:px-6">
+                <div className="flex min-w-0 items-center gap-3">
+                    <AppLogo className="h-10 w-10 shrink-0" />
+                    <div className="min-w-0">
+                        <div className="flex items-baseline gap-2">
+                            <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
+                                Vialert EC
                             </h1>
-                            {!simpleMode && (
-                                <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                        Monitor Vial Nacional
-                                    </span>
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Acciones de la Navbar */}
-                    <div className="flex items-center gap-2">
-                        {/* Indicador de "En Vivo" para Desktop */}
-                        {!simpleMode && (
-                            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full mr-2">
-                                <Radio size={12} className="text-red-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Live Feed</span>
-                            </div>
-                        )}
-
-                        {/* Botón Refrescar */}
-                        <button
-                            onClick={onRefresh}
-                            disabled={loading}
-                            className={`p-2 rounded-xl transition-all active:scale-95 flex items-center gap-2 
-                                ${loading
-                                    ? 'bg-blue-50 text-blue-600'
-                                    : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                                }`}
-                            title="Actualizar datos"
-                        >
-                            <span className="hidden md:block text-[10px] font-bold uppercase tracking-wider">
-                                {loading ? 'Sincronizando...' : 'Actualizar'}
+                            <span className="hidden rounded border border-slate-600 px-1.5 py-0.5 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-slate-300 sm:inline">
+                                Ecuador
                             </span>
-                            <RefreshCw
-                                size={simpleMode ? 16 : 18}
-                                className={`${loading ? 'animate-spin text-blue-600' : ''}`}
-                            />
-                        </button>
+                        </div>
+                        <p className="truncate text-xs font-medium text-slate-300 sm:text-sm">
+                            Monitor nacional de condiciones viales
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                    <div className="hidden items-center gap-3 rounded-lg border border-slate-600/80 bg-slate-800/50 px-3 py-2 lg:flex">
+                        <div className="flex items-center gap-2">
+                            <Radio size={15} className="text-emerald-400" aria-hidden="true" />
+                            <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-200">
+                                ECU 911
+                            </span>
+                        </div>
+                        <span className="h-4 w-px bg-slate-600" />
+                        <span className="text-xs text-slate-300">
+                            Actualizado {formatUpdateTime(updatedAt)}
+                        </span>
                     </div>
 
+                    <div className="hidden items-center gap-1.5 text-xs font-medium text-slate-300 sm:flex lg:hidden">
+                        <ShieldCheck size={15} className="text-emerald-400" aria-hidden="true" />
+                        Fuente oficial
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onRefresh}
+                        disabled={loading}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 text-sm font-semibold text-white transition hover:border-slate-400 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:cursor-wait disabled:opacity-70 sm:px-4"
+                        aria-label="Actualizar información vial"
+                    >
+                        <RefreshCw size={17} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
+                        <span className="hidden sm:inline">{loading ? 'Actualizando' : 'Actualizar'}</span>
+                    </button>
                 </div>
             </div>
-        </nav>
+        </header>
     );
 };

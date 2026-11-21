@@ -1,96 +1,77 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { getCantonCoordinates, DEFAULT_ECUADOR_CENTER } from '../../constants/cantonCoordinates';
 
-// Esto es necesario porque Vite a veces no encuentra los iconos de Leaflet
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+const ECUADOR_GEOJSON_URL = 'https://raw.githubusercontent.com/jpmarindiaz/geo-collection/master/ecu/ecuador.geojson';
 
-// Iconos coloreados de la librería 'leaflet-color-markers'
-const getMarkerIcon = (color) => new L.Icon({
-    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-// Cache de iconos para no recrearlos
-const icons = {
-    red: getMarkerIcon('red'),
-    gold: getMarkerIcon('gold'),
-    green: getMarkerIcon('green'),
-    violet: getMarkerIcon('violet'),
-    blue: getMarkerIcon('blue'),
-    grey: getMarkerIcon('grey')
-};
-
-// URL de GeoJSON de Ecuador (Provincias)
-const ECUADOR_GEOJSON_URL = "https://raw.githubusercontent.com/jpmarindiaz/geo-collection/master/ecu/ecuador.geojson";
+const markerIcons = ['red', 'amber', 'green', 'blue'].reduce((result, tone) => {
+    result[tone] = L.divIcon({
+        className: 'road-marker-shell',
+        html: `<span class="road-marker road-marker--${tone}"><span></span></span>`,
+        iconSize: [28, 34],
+        iconAnchor: [14, 31],
+        popupAnchor: [0, -28],
+    });
+    return result;
+}, {});
 
 const hasFiniteCoordinates = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng);
+
+const hasUsableMapViewport = (map) => {
+    const size = map.getSize();
+    const center = map.getCenter();
+
+    return hasFiniteCoordinates(size.x, size.y) &&
+        size.x > 0 &&
+        size.y > 0 &&
+        hasFiniteCoordinates(center.lat, center.lng) &&
+        Number.isFinite(map.getZoom());
+};
 
 const findSelectedFeature = (data, selected) => {
     if (!Array.isArray(data?.features) || !selected || selected === 'TODAS') return null;
 
     const selectedName = selected.toUpperCase();
-    return data.features.find(feature => {
+    return data.features.find((feature) => {
         const provinceName = feature?.properties?.dpa_despro;
         if (typeof provinceName !== 'string') return false;
 
         const normalizedProvinceName = provinceName.toUpperCase();
-        return normalizedProvinceName.includes(selectedName) ||
-            selectedName.includes(normalizedProvinceName);
+        return normalizedProvinceName.includes(selectedName) || selectedName.includes(normalizedProvinceName);
     }) || null;
 };
 
-// Se mantiene fuera de ViaMap para evitar remontajes y nuevas animaciones en cada render.
 const ProvinceHighlighter = ({ data, selected }) => {
     const map = useMap();
-    const selectedFeature = useMemo(
-        () => findSelectedFeature(data, selected),
-        [data, selected]
-    );
+    const selectedFeature = useMemo(() => findSelectedFeature(data, selected), [data, selected]);
 
     useEffect(() => {
+        if (!hasUsableMapViewport(map)) {
+            map.stop();
+            return undefined;
+        }
+
         try {
             if (selectedFeature) {
-                const layer = L.geoJSON(selectedFeature);
-                const bounds = layer.getBounds();
-
-                if (!bounds?.isValid()) {
-                    console.warn("Invalid bounds for feature", selectedFeature);
-                    return undefined;
-                }
+                const bounds = L.geoJSON(selectedFeature).getBounds();
+                if (!bounds.isValid()) return undefined;
 
                 const center = bounds.getCenter();
-                if (!hasFiniteCoordinates(center.lat, center.lng)) {
-                    console.warn("Calculated center is invalid", center);
-                    return undefined;
-                }
+                if (!hasFiniteCoordinates(center.lat, center.lng)) return undefined;
 
                 map.stop();
-                map.flyToBounds(bounds, { padding: [20, 20], duration: 1.5 });
+                map.flyToBounds(bounds, { padding: [24, 24], duration: 1.1, maxZoom: 9 });
             } else if (selected === 'TODAS' || !selected) {
-                const [lat, lng] = Array.isArray(DEFAULT_ECUADOR_CENTER)
-                    ? DEFAULT_ECUADOR_CENTER
-                    : [];
+                const [lat, lng] = Array.isArray(DEFAULT_ECUADOR_CENTER) ? DEFAULT_ECUADOR_CENTER : [];
+                if (!hasFiniteCoordinates(lat, lng)) return undefined;
 
-                if (hasFiniteCoordinates(lat, lng)) {
-                    map.stop();
-                    map.flyTo([lat, lng], 7, { duration: 1.5 });
-                } else {
-                    const fallbackCenter = [-1.8312, -78.1834];
-                    console.error("Invalid DEFAULT_ECUADOR_CENTER:", DEFAULT_ECUADOR_CENTER);
-                    map.stop();
-                    map.flyTo(fallbackCenter, 7, { duration: 1.5 });
-                }
+                map.stop();
+                map.flyTo([lat, lng], 7, { duration: 1.1 });
             }
         } catch (error) {
-            console.error("CRITICAL MAP ERROR in ProvinceHighlighter:", error);
+            console.error('No se pudo actualizar la vista del mapa:', error);
         }
 
         return () => map.stop();
@@ -101,104 +82,126 @@ const ProvinceHighlighter = ({ data, selected }) => {
             key={selected}
             data={selectedFeature}
             style={{
-                color: '#3b82f6',
+                color: '#0f4c6e',
                 weight: 3,
-                opacity: 0.8,
-                fillColor: '#3b82f6',
-                fillOpacity: 0.1
+                opacity: 0.95,
+                fillColor: '#2d789c',
+                fillOpacity: 0.12,
             }}
         />
     ) : null;
 };
 
-export const ViaMap = ({ vias, interactive, selectedProvince }) => {
+const MapResizeHandler = () => {
+    const map = useMap();
+
+    useEffect(() => {
+        const container = map.getContainer();
+        const observer = new ResizeObserver(() => {
+            map.invalidateSize({ animate: false, pan: false });
+        });
+
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [map]);
+
+    return null;
+};
+
+const deterministicOffset = (id, axis) => {
+    const source = `${id || 'road'}-${axis}`;
+    let hash = 0;
+    for (let index = 0; index < source.length; index += 1) {
+        hash = ((hash << 5) - hash + source.charCodeAt(index)) | 0;
+    }
+    return (((Math.abs(hash) % 1000) / 1000) - 0.5) * 0.006;
+};
+
+const getMarkerIcon = (road) => {
+    if (road.isUserReport) return markerIcons.blue;
+    if (road.estado_codigo === 'CERRADA') return markerIcons.red;
+    if (road.estado_codigo === 'PARCIAL') return markerIcons.amber;
+    return markerIcons.green;
+};
+
+export const ViaMap = ({ vias = [], selectedProvince }) => {
     const [geoJsonData, setGeoJsonData] = useState(null);
 
-    // Cargar GeoJSON al montar
     useEffect(() => {
-        fetch(ECUADOR_GEOJSON_URL)
-            .then(res => res.json())
-            .then(data => setGeoJsonData(data))
-            .catch(err => console.error("Error cargando mapa:", err));
+        const controller = new AbortController();
+
+        fetch(ECUADOR_GEOJSON_URL, { signal: controller.signal })
+            .then((response) => {
+                if (!response.ok) throw new Error(`GeoJSON respondió ${response.status}`);
+                return response.json();
+            })
+            .then(setGeoJsonData)
+            .catch((error) => {
+                if (error.name !== 'AbortError') console.error('No se pudo cargar el límite provincial:', error);
+            });
+
+        return () => controller.abort();
     }, []);
 
-    const markers = useMemo(() => {
-        return vias.map(via => {
-            // 1. Si es reporte de usuario, tiene coordenadas exactas
-            if (via.isUserReport &&
-                via.coordenadas &&
-                hasFiniteCoordinates(via.coordenadas.lat, via.coordenadas.lng)) {
-                return { ...via, lat: via.coordenadas.lat, lng: via.coordenadas.lng, isApprox: false };
-            }
-
-            // 2. Si es data oficial, intentamos buscar por Cantón
-            if (!via.isUserReport && via.canton) {
-                const coords = getCantonCoordinates(via.canton);
-                if (coords) {
-                    // Pequeña variación aleatoria para que no se superpongan todos en el centro exacto
-                    const randomOffset = () => (Math.random() - 0.5) * 0.005;
-                    return {
-                        ...via,
-                        lat: coords.lat + randomOffset(),
-                        lng: coords.lng + randomOffset(),
-                        isApprox: true
-                    };
-                }
-            }
-            return null;
-        }).filter(marker => marker && hasFiniteCoordinates(marker.lat, marker.lng));
-    }, [vias]);
-
-    const getIconForVia = (via) => {
-        if (via.isUserReport) return icons.violet;
-
-        switch (via.estado_codigo) {
-            case 'CERRADA': return icons.red;
-            case 'PARCIAL': return icons.gold; // Gold/Orange for partial
-            case 'HABILITADA': return icons.green;
-            default: return icons.blue;
+    const markers = useMemo(() => vias.map((road) => {
+        if (
+            road.isUserReport &&
+            road.coordenadas &&
+            hasFiniteCoordinates(road.coordenadas.lat, road.coordenadas.lng)
+        ) {
+            return { ...road, lat: road.coordenadas.lat, lng: road.coordenadas.lng, isApprox: false };
         }
-    };
+
+        if (!road.isUserReport && road.canton) {
+            const coordinates = getCantonCoordinates(road.canton);
+            if (coordinates) {
+                return {
+                    ...road,
+                    lat: coordinates.lat + deterministicOffset(road.id, 'lat'),
+                    lng: coordinates.lng + deterministicOffset(road.id, 'lng'),
+                    isApprox: true,
+                };
+            }
+        }
+
+        return null;
+    }).filter((marker) => marker && hasFiniteCoordinates(marker.lat, marker.lng)), [vias]);
 
     return (
-        <div className={`${interactive ? 'h-full w-full rounded-none border-0 shadow-none' : 'h-[450px] w-full rounded-[32px] shadow-2xl border-8 border-white mb-10'} relative z-0 overflow-hidden`}>
-            <MapContainer center={DEFAULT_ECUADOR_CENTER} zoom={7} scrollWheelZoom={!!interactive} style={{ height: '100%', width: '100%' }}>
+        <div className="relative h-full w-full overflow-hidden bg-slate-200">
+            <MapContainer
+                center={DEFAULT_ECUADOR_CENTER}
+                zoom={7}
+                minZoom={6}
+                scrollWheelZoom
+                style={{ height: '100%', width: '100%' }}
+            >
                 <TileLayer
-                    url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                 />
 
-                {/* Capa de GeoJSON para Provincias */}
+                <MapResizeHandler />
                 <ProvinceHighlighter data={geoJsonData} selected={selectedProvince} />
 
-                {markers.map((via) => (
-                    <Marker
-                        key={via.id}
-                        position={[via.lat, via.lng]}
-                        icon={getIconForVia(via)}
-                    >
-                        <Popup className="custom-popup">
-                            <div className="p-1 min-w-[200px]">
-                                {via.isApprox && (
-                                    <span className="text-[9px] bg-slate-100 text-slate-500 px-1 rounded block mb-1 w-fit border border-slate-200">
-                                        📍 Approx: {via.canton}
+                {markers.map((road) => (
+                    <Marker key={road.id} position={[road.lat, road.lng]} icon={getMarkerIcon(road)}>
+                        <Popup className="vialert-popup" maxWidth={300}>
+                            <div className="min-w-[230px] p-1 text-slate-800">
+                                <div className="mb-2 flex flex-wrap items-center gap-2">
+                                    <span className="rounded bg-slate-800 px-2 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                                        {road.provincia}
                                     </span>
+                                    <span className="text-xs font-semibold text-slate-500">{road.canton}</span>
+                                </div>
+                                <h3 className="text-base font-extrabold leading-5 text-slate-900">{road.nombre_via}</h3>
+                                <p className="mt-2 text-sm font-bold text-slate-700">{road.estado_texto || road.estado_codigo}</p>
+                                {road.observaciones && (
+                                    <p className="mt-2 text-sm leading-5 text-slate-600">{road.observaciones}</p>
                                 )}
-                                <h4 className="font-extrabold text-slate-900 text-sm mb-1 leading-tight">{via.nombre_via || via.descripcion}</h4>
-
-                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wide inline-block mb-2 ${via.estado_codigo === 'CERRADA' ? 'bg-red-600 text-white' :
-                                    via.estado_codigo === 'PARCIAL' ? 'bg-amber-500 text-white' :
-                                        via.isUserReport ? 'bg-purple-600 text-white' :
-                                            'bg-emerald-500 text-white'
-                                    }`}>
-                                    {via.estado_texto || via.estado_codigo}
-                                </span>
-
-                                {via.observaciones && (
-                                    <p className="text-xs text-slate-600 leading-normal line-clamp-4 bg-slate-50 p-2 rounded border border-slate-100 italic">
-                                        "{via.observaciones}"
-                                    </p>
-                                )}
+                                <p className="mt-3 border-t border-slate-200 pt-2 text-xs text-slate-500">
+                                    {road.isApprox ? `Ubicación referencial: ${road.canton}` : 'Ubicación reportada por la comunidad'}
+                                </p>
                             </div>
                         </Popup>
                     </Marker>
