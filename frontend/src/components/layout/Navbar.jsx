@@ -1,6 +1,7 @@
 import React from 'react';
-import { RefreshCw, Radio, ShieldCheck } from 'lucide-react';
-import AppLogo from '../ui/AppLogo';
+import { Download, FileDown, LoaderCircle, RefreshCw, Radio, ShieldCheck } from 'lucide-react';
+import { BrandLogo } from '../brand/BrandLogo';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 const formatUpdateTime = (timestamp) => {
     if (!timestamp) return 'Esperando datos';
@@ -11,24 +12,22 @@ const formatUpdateTime = (timestamp) => {
     }).format(new Date(timestamp));
 };
 
-export const Navbar = ({ onRefresh, loading, updatedAt }) => {
+export const Navbar = ({ onRefresh, onOpenReport, canExport, reportGenerating, loading, updatedAt }) => {
+    const { canInstall, install } = usePWAInstall();
+
     return (
-        <header className="shrink-0 border-b border-slate-700/70 bg-[#0b1f33] text-white">
-            <div className="flex h-[72px] items-center justify-between gap-4 px-4 sm:px-6">
-                <div className="flex min-w-0 items-center gap-3">
-                    <AppLogo className="h-10 w-10 shrink-0" />
-                    <div className="min-w-0">
-                        <div className="flex items-baseline gap-2">
-                            <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
-                                Vialert EC
-                            </h1>
-                            <span className="hidden rounded border border-slate-600 px-1.5 py-0.5 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-slate-300 sm:inline">
-                                Ecuador
-                            </span>
+        <header className="app-header shrink-0 border-b border-white/10 bg-brand-navy text-white">
+            <div className="flex min-h-[68px] items-center justify-between gap-3 px-3 py-2 sm:min-h-[76px] sm:px-6">
+                <div className="flex min-w-0 items-center">
+                    <div className="hidden h-[58px] w-[230px] items-center rounded-xl bg-white px-2.5 shadow-sm sm:flex">
+                        <BrandLogo variant="horizontal" className="h-[50px] w-full" priority />
+                    </div>
+                    <div className="flex items-center gap-2.5 sm:hidden">
+                        <BrandLogo variant="isotype" className="h-12 w-12 shrink-0" alt="Vialert-EC" priority />
+                        <div className="min-w-0">
+                            <h1 className="truncate text-[1.05rem] font-bold tracking-tight">Vialert-EC</h1>
+                            <p className="truncate text-[0.68rem] font-medium text-blue-100">Monitoreo vial en tiempo real</p>
                         </div>
-                        <p className="truncate text-xs font-medium text-slate-300 sm:text-sm">
-                            Monitor nacional de condiciones viales
-                        </p>
                     </div>
                 </div>
 
@@ -51,11 +50,37 @@ export const Navbar = ({ onRefresh, loading, updatedAt }) => {
                         Fuente oficial
                     </div>
 
+                    {canInstall && (
+                        <button
+                            type="button"
+                            onClick={install}
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-blue-300/40 bg-blue-600/30 px-3 text-sm font-semibold text-white transition hover:bg-blue-600/50 focus:outline-none focus:ring-2 focus:ring-brand-yellow"
+                            aria-label="Instalar Vialert-EC"
+                        >
+                            <Download size={17} aria-hidden="true" />
+                            <span className="hidden lg:inline">Instalar</span>
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={onOpenReport}
+                        disabled={!canExport || reportGenerating}
+                        className="hidden min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-brand-yellow disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+                        aria-label="Descargar reporte vial"
+                        title="Elegir diseño y descargar reporte PDF"
+                    >
+                        {reportGenerating
+                            ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+                            : <FileDown size={17} aria-hidden="true" />}
+                        <span className="hidden xl:inline">{reportGenerating ? 'Generando PDF...' : 'Descargar reporte'}</span>
+                    </button>
+
                     <button
                         type="button"
                         onClick={onRefresh}
                         disabled={loading}
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 text-sm font-semibold text-white transition hover:border-slate-400 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:cursor-wait disabled:opacity-70 sm:px-4"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-brand-yellow disabled:cursor-wait disabled:opacity-70 sm:px-4"
                         aria-label="Actualizar información vial"
                     >
                         <RefreshCw size={17} className={loading ? 'animate-spin' : ''} aria-hidden="true" />

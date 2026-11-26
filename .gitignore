@@ -4,10 +4,17 @@ frontend/dist/
 frontend/.env
 
 # Backend
+backend/.env
 backend/__pycache__/
 backend/.venv/
 backend/env/
 backend/*.pyc
+__pycache__/
+*.pyc
+
+# Artefactos locales generados
+/output/
+/tmp/
 
 # IDEs y Sistema
 .vscode/

@@ -1,0 +1,305 @@
+{
+  "generatedAt": "2026-11-24T16:54:57.067Z",
+  "baseUrl": "http://127.0.0.1:5174/",
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "viewportRuns": [
+    {
+      "width": 320,
+      "height": 568,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 320,
+        "viewportWidth": 320,
+        "smallTargets": [],
+        "visibleCards": 53,
+        "visibleButtons": 61,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 48,
+            "renderedHeight": 48
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 360,
+        "viewportWidth": 360,
+        "smallTargets": [],
+        "visibleCards": 53,
+        "visibleButtons": 61,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 48,
+            "renderedHeight": 48
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "smallTargets": [],
+        "visibleCards": 53,
+        "visibleButtons": 61,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 48,
+            "renderedHeight": 48
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 430,
+        "viewportWidth": 430,
+        "smallTargets": [],
+        "visibleCards": 53,
+        "visibleButtons": 61,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 48,
+            "renderedHeight": 48
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 768,
+        "viewportWidth": 768,
+        "smallTargets": [
+          {
+            "label": "Leaflet",
+            "width": 46,
+            "height": 15
+          }
+        ],
+        "visibleCards": 53,
+        "visibleButtons": 40,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 230,
+            "renderedHeight": 58
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 1366,
+        "viewportWidth": 1366,
+        "smallTargets": [
+          {
+            "label": "Leaflet",
+            "width": 46,
+            "height": 15
+          }
+        ],
+        "visibleCards": 53,
+        "visibleButtons": 40,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 230,
+            "renderedHeight": 58
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "metrics": {
+        "horizontalOverflow": false,
+        "documentWidth": 1920,
+        "viewportWidth": 1920,
+        "smallTargets": [
+          {
+            "label": "Leaflet",
+            "width": 46,
+            "height": 15
+          }
+        ],
+        "visibleCards": 53,
+        "visibleButtons": 40,
+        "logo": [
+          {
+            "src": "/brand/logo-dark.png",
+            "naturalWidth": 1360,
+            "naturalHeight": 561,
+            "renderedWidth": 230,
+            "renderedHeight": 58
+          },
+          {
+            "src": "/brand/isotype-color.png",
+            "naturalWidth": 851,
+            "naturalHeight": 1007,
+            "renderedWidth": 0,
+            "renderedHeight": 0
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    }
+  ],
+  "scenarios": {
+    "mobileMap": {
+      "mapRect": {
+        "x": 0,
+        "y": 130,
+        "width": 390,
+        "height": 714
+      },
+      "landscapeRect": {
+        "x": 445,
+        "y": 77,
+        "width": 399,
+        "height": 313
+      },
+      "popupVisible": true,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "requestFailures": []
+    },
+    "provinceHighlight": {
+      "selected": "PICHINCHA",
+      "highlightVisible": true
+    },
+    "splash-mobile": {
+      "visibleAtMs": 300,
+      "dismissedAtMs": 4158
+    },
+    "splash-desktop": {
+      "visibleAtMs": 300,
+      "dismissedAtMs": 3843
+    },
+    "apiError": {
+      "retryVisible": true
+    },
+    "tileError": {
+      "retryVisible": true
+    },
+    "offline": {
+      "offlineNotice": true,
+      "visibleCards": 53
+    },
+    "pwa": {
+      "manifestUrl": "http://127.0.0.1:5174/manifest.webmanifest",
+      "manifestErrors": [],
+      "installability": {
+        "installabilityErrors": [
+          {
+            "errorId": "in-incognito",
+            "errorArguments": []
+          }
+        ]
+      },
+      "swState": {
+        "controlled": true,
+        "activeState": "activated",
+        "scope": "http://127.0.0.1:5174/",
+        "cacheNames": [
+          "vialert-shell-v2",
+          "vialert-runtime-v2"
+        ]
+      }
+    }
+  }
+}

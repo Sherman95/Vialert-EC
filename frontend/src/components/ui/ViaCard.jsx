@@ -10,6 +10,7 @@ import {
     UserRound,
     ChevronDown,
     ChevronUp,
+    MapPinned,
 } from 'lucide-react';
 
 const statusConfig = {
@@ -89,7 +90,7 @@ const RoadDetails = ({ via }) => {
     );
 };
 
-const ViaCard = ({ via, variant = 'full' }) => {
+const ViaCard = ({ via, variant = 'full', onViewOnMap }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const config = statusConfig[via.estado_codigo] || statusConfig.HABILITADA;
     const StatusIcon = config.icon;
@@ -128,10 +129,18 @@ const ViaCard = ({ via, variant = 'full' }) => {
                         <RoadDetails via={via} />
                         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
                             <SourceLabel isUserReport={via.isUserReport} />
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                                <Clock3 size={13} aria-hidden="true" />
-                                {formatUpdatedAt(via.fecha_actualizacion)}
-                            </span>
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                                    <Clock3 size={13} aria-hidden="true" />
+                                    {formatUpdatedAt(via.fecha_actualizacion)}
+                                </span>
+                                {onViewOnMap && (
+                                    <button type="button" onClick={() => onViewOnMap(via)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-blue-50 px-3 text-xs font-bold text-brand-primary hover:bg-blue-100">
+                                        <MapPinned size={14} aria-hidden="true" />
+                                        Ver en mapa
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -163,10 +172,18 @@ const ViaCard = ({ via, variant = 'full' }) => {
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
                 <SourceLabel isUserReport={via.isUserReport} />
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                    <Clock3 size={13} aria-hidden="true" />
-                    {formatUpdatedAt(via.fecha_actualizacion)}
-                </span>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                        <Clock3 size={13} aria-hidden="true" />
+                        {formatUpdatedAt(via.fecha_actualizacion)}
+                    </span>
+                    {onViewOnMap && (
+                        <button type="button" onClick={() => onViewOnMap(via)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-blue-50 px-3 text-xs font-bold text-brand-primary transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-brand-primary/30">
+                            <MapPinned size={14} aria-hidden="true" />
+                            Ver en mapa
+                        </button>
+                    )}
+                </div>
             </div>
         </article>
     );

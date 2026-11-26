@@ -1,0 +1,356 @@
+{
+  "assets": [
+    {
+      "path": "frontend/public/apple-touch-icon.png",
+      "format": "PNG",
+      "dimensions": "180×180",
+      "bytes": 33472,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/brand/isotype-color.png",
+      "format": "PNG",
+      "dimensions": "851×1007",
+      "bytes": 505516,
+      "alpha": "sí",
+      "references": [
+        "frontend/public/sw.js",
+        "frontend/src/components/brand/BrandLogo.jsx"
+      ]
+    },
+    {
+      "path": "frontend/public/brand/isotype-light.png",
+      "format": "PNG",
+      "dimensions": "851×1007",
+      "bytes": 71026,
+      "alpha": "sí",
+      "references": [
+        "frontend/src/components/brand/BrandLogo.jsx"
+      ]
+    },
+    {
+      "path": "frontend/public/brand/logo-compact.png",
+      "format": "PNG",
+      "dimensions": "851×1007",
+      "bytes": 505516,
+      "alpha": "sí",
+      "references": [
+        "frontend/public/sw.js",
+        "frontend/src/components/brand/BrandLogo.jsx"
+      ]
+    },
+    {
+      "path": "frontend/public/brand/logo-dark.png",
+      "format": "PNG",
+      "dimensions": "1360×561",
+      "bytes": 113832,
+      "alpha": "sí",
+      "references": [
+        "frontend/src/components/brand/BrandLogo.jsx"
+      ]
+    },
+    {
+      "path": "frontend/public/brand/logo-horizontal.png",
+      "format": "PNG",
+      "dimensions": "1360×561",
+      "bytes": 367896,
+      "alpha": "sí",
+      "references": [
+        "frontend/public/sw.js",
+        "frontend/src/components/brand/BrandLogo.jsx"
+      ]
+    },
+    {
+      "path": "frontend/public/favicon.ico",
+      "format": "ICO",
+      "dimensions": "16×16, 32×32, 48×48",
+      "bytes": 5572,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/apple-touch-icon.png",
+      "format": "PNG",
+      "dimensions": "180×180",
+      "bytes": 33472,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/favicon-16.png",
+      "format": "PNG",
+      "dimensions": "16×16",
+      "bytes": 631,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/favicon-32.png",
+      "format": "PNG",
+      "dimensions": "32×32",
+      "bytes": 1700,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html",
+        "frontend/public/sw.js"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/favicon-48.png",
+      "format": "PNG",
+      "dimensions": "48×48",
+      "bytes": 3058,
+      "alpha": "no",
+      "references": []
+    },
+    {
+      "path": "frontend/public/icons/favicon.ico",
+      "format": "ICO",
+      "dimensions": "16×16, 32×32, 48×48",
+      "bytes": 5572,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-128.png",
+      "format": "PNG",
+      "dimensions": "128×128",
+      "bytes": 20167,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-144.png",
+      "format": "PNG",
+      "dimensions": "144×144",
+      "bytes": 24190,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-152.png",
+      "format": "PNG",
+      "dimensions": "152×152",
+      "bytes": 26404,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-192.png",
+      "format": "PNG",
+      "dimensions": "192×192",
+      "bytes": 37969,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest",
+        "frontend/public/sw.js"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-384.png",
+      "format": "PNG",
+      "dimensions": "384×384",
+      "bytes": 127487,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-48.png",
+      "format": "PNG",
+      "dimensions": "48×48",
+      "bytes": 4308,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-512.png",
+      "format": "PNG",
+      "dimensions": "512×512",
+      "bytes": 220873,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest",
+        "frontend/public/sw.js"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-72.png",
+      "format": "PNG",
+      "dimensions": "72×72",
+      "bytes": 8289,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-96.png",
+      "format": "PNG",
+      "dimensions": "96×96",
+      "bytes": 12970,
+      "alpha": "no",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-maskable-192.png",
+      "format": "PNG",
+      "dimensions": "192×192",
+      "bytes": 16566,
+      "alpha": "sí",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/icons/icon-maskable-512.png",
+      "format": "PNG",
+      "dimensions": "512×512",
+      "bytes": 79801,
+      "alpha": "sí",
+      "references": [
+        "frontend/public/manifest.webmanifest"
+      ]
+    },
+    {
+      "path": "frontend/public/images/og-image.png",
+      "format": "PNG",
+      "dimensions": "1200×630",
+      "bytes": 144147,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/splash/splash-desktop.webp",
+      "format": "WEBP",
+      "dimensions": "1672×941",
+      "bytes": 53600,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    },
+    {
+      "path": "frontend/public/splash/splash-mobile.webp",
+      "format": "WEBP",
+      "dimensions": "941×1672",
+      "bytes": 52854,
+      "alpha": "no",
+      "references": [
+        "frontend/index.html"
+      ]
+    }
+  ],
+  "originals": [
+    {
+      "path": "img/favicon-master.png",
+      "format": "PNG",
+      "dimensions": "1254×1254",
+      "bytes": 1134205,
+      "alpha": "no",
+      "references": [],
+      "sha256": "7efea96fcfbf3ba20cb2bd88360152c7143b0461267c720f85164f066f08ddae"
+    },
+    {
+      "path": "img/isotype-color.png",
+      "format": "PNG",
+      "dimensions": "1254×1254",
+      "bytes": 625926,
+      "alpha": "sí",
+      "references": [],
+      "sha256": "3153d74c7cacbae94d5b7cfeceb1e91a1da8564244c3af1f62f74f41fa1ed9cf"
+    },
+    {
+      "path": "img/logo-horizontal.png",
+      "format": "PNG",
+      "dimensions": "1448×1086",
+      "bytes": 447612,
+      "alpha": "sí",
+      "references": [],
+      "sha256": "f0de431d6a43f7fd91ad05dc19f5cfeecb102a50d8f6401a2881d404838cae38"
+    },
+    {
+      "path": "img/pwa-icon-master.png",
+      "format": "PNG",
+      "dimensions": "1254×1254",
+      "bytes": 1502231,
+      "alpha": "no",
+      "references": [],
+      "sha256": "b3ca5a4308b03f77c4d96af337f62d2f15ebd3b5bc818c9db7465edc401d3e52"
+    },
+    {
+      "path": "img/splash-desktop.webp",
+      "format": "PNG",
+      "dimensions": "1672×941",
+      "bytes": 1358411,
+      "alpha": "no",
+      "references": [],
+      "sha256": "c1d40d4b814b2c0c75e5d3963773fddfb7ba9b3e63d5813b964cdcf0002a18f8"
+    },
+    {
+      "path": "img/splash-mobile.webp",
+      "format": "PNG",
+      "dimensions": "941×1672",
+      "bytes": 1393017,
+      "alpha": "no",
+      "references": [],
+      "sha256": "0bea2c67bf5c75151ea05545b517a2a44d92b00ccaf63ac11879e1ca36bf5ee3"
+    },
+    {
+      "path": "img/vialert-brand-board.png",
+      "format": "PNG",
+      "dimensions": "1448×1086",
+      "bytes": 1640545,
+      "alpha": "no",
+      "references": [],
+      "sha256": "90379238b13a6991f171c7ac5769a3da2b473b5c0d0970489a30d0731cee8f99"
+    },
+    {
+      "path": "img/web-header-reference.png",
+      "format": "PNG",
+      "dimensions": "1916×821",
+      "bytes": 2077916,
+      "alpha": "no",
+      "references": [],
+      "sha256": "ebfd22dbdc01cf84cbbea4c9ca9a2da33f8ad103b095cee260953b87b667a658"
+    }
+  ],
+  "mask_safe_zone": [
+    {
+      "path": "frontend/public/icons/icon-maskable-192.png",
+      "essential_radius_px": 66.05,
+      "safe_radius_px": 76.8,
+      "passes": true
+    },
+    {
+      "path": "frontend/public/icons/icon-maskable-512.png",
+      "essential_radius_px": 174.83,
+      "safe_radius_px": 204.8,
+      "passes": true
+    }
+  ]
+}

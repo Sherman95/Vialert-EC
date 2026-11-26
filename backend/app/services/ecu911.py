@@ -1,102 +1,116 @@
-import requests
+import logging
 import re
-import urllib3
-import json
+from pathlib import Path
+
+import requests
+
 from app.core.config import settings
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-print("Hola soy el cambio nuevo - VERSION 5000")
-class ECU911Service:
-    def limpiar_texto(self, texto):
-        if not texto: return "N/A"
-        return re.sub(r'\s+', ' ', str(texto)).strip()
 
-    def detectar_estado(self, texto):
-        t = str(texto).upper()
-        if "CERRADA" in t: return "CERRADA"
-        if "PARCIAL" in t: return "PARCIAL"
+logger = logging.getLogger(__name__)
+ECU911_CA_BUNDLE = Path(__file__).resolve().parents[2] / "certs" / "SectigoPublicServerAuthenticationCADVR36.pem"
+
+
+class ECU911ServiceError(RuntimeError):
+    """Raised when the official road source cannot provide a valid response."""
+
+
+class ECU911Service:
+    request_headers = {
+        "User-Agent": "Vialert-EC/2.0 (+https://vialert-ec.vercel.app)",
+        "Accept": "application/json",
+        "Accept-Language": "es-EC,es;q=0.9",
+    }
+
+    def limpiar_texto(self, texto, fallback="N/A"):
+        if texto is None or texto == "":
+            return fallback
+        return re.sub(r"\s+", " ", str(texto)).strip()
+
+    def detectar_estado(self, estado, observaciones=""):
+        contexto = f"{estado} {observaciones}".upper()
+        if "CERRADA" in contexto:
+            return "CERRADA"
+        if any(term in contexto for term in ("PARCIAL", "RESTRIC", "PASO CONTROLADO", "50%")):
+            return "PARCIAL"
         return "HABILITADA"
 
     def extraer_via_alterna(self, obs, alterna_api):
         if alterna_api and len(alterna_api) > 4 and alterna_api != "N/A":
-            return alterna_api
-        
-        if not obs or len(obs) < 5: return "N/A"
-        
+            return self.limpiar_texto(alterna_api)
+
+        if not obs or len(obs) < 5:
+            return "N/A"
+
         obs_upper = obs.upper()
-        keywords = ["VIA ALTERNA", "RUTA ALTERNA", "DESVIO", "TOMAR LA VIA"]
-        
-        for kw in keywords:
-            if kw in obs_upper:
-                start = obs_upper.find(kw) + len(kw)
-                resto = obs_upper[start:]
-                resto = re.sub(r'^[:\/\-\.\s]+', '', resto)
-                candidato = re.split(r'\.', resto)[0].strip()
-                if len(candidato) > 4: return self.limpiar_texto(candidato)
+        for keyword in ("VIA ALTERNA", "RUTA ALTERNA", "DESVIO", "TOMAR LA VIA"):
+            if keyword not in obs_upper:
+                continue
+            start = obs_upper.find(keyword) + len(keyword)
+            remainder = re.sub(r"^[:/\-.\s]+", "", obs_upper[start:])
+            candidate = re.split(r"\.", remainder)[0].strip()
+            if len(candidate) > 4:
+                return self.limpiar_texto(candidate)
         return "N/A"
 
-    def fetch_vias(self):
-        # HEADERS COMPLETOS DE CHROME (Importante para evitar bloqueo)
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/json, text/html, application/xhtml+xml, application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
-        }
+    def _request_official_data(self):
+        try:
+            response = requests.get(
+                settings.ECU911_URL,
+                headers=self.request_headers,
+                timeout=(10, 60),
+                verify=str(ECU911_CA_BUNDLE),
+            )
+            response.raise_for_status()
+        except requests.Timeout as error:
+            raise ECU911ServiceError("ECU 911 excedió el tiempo máximo de respuesta") from error
+        except requests.RequestException as error:
+            raise ECU911ServiceError(f"No fue posible consultar ECU 911: {error}") from error
 
         try:
-            print(f"--- [DEBUG] Iniciando petición a ECU911: {settings.ECU911_URL} ---")
-            
-            response = requests.get(
-                settings.ECU911_URL, 
-                headers=headers, 
-                verify=False, 
-                timeout=15
-            )
-            
-            print(f"--- [DEBUG] ECU911 Status Code: {response.status_code} ---")
+            payload = response.json()
+        except requests.exceptions.JSONDecodeError as error:
+            raise ECU911ServiceError("ECU 911 devolvió una respuesta que no es JSON") from error
 
-            if response.status_code != 200:
-                print(f"--- [ERROR] La API devolvió estado {response.status_code} ---")
-                return {"cantidad": 0, "datos": [], "error": f"Error HTTP {response.status_code}"}
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            raise ECU911ServiceError("ECU 911 devolvió una estructura de datos inesperada")
+        return payload["data"]
 
-            try:
-                # AQUÍ ESTÁ EL BLINDAJE
-                raw_data = response.json().get("data", [])
-            except json.JSONDecodeError:
-                print("--- [ERROR CRÍTICO] La respuesta NO es un JSON válido ---")
-                print(f"Contenido recibido (primeros 200 chars): {response.text[:200]}")
-                return {"cantidad": 0, "datos": [], "error": "API bloqueada o respuesta inválida"}
+    def fetch_vias(self):
+        raw_data = self._request_official_data()
+        processed_roads = []
 
-            vias_procesadas = []
-            for item in raw_data:
-                obs = self.limpiar_texto(item.get("observaciones"))
-                prov = self.limpiar_texto(item.get("Provincia", {}).get("descripcion", "DESCONOCIDO"))
-                canton = self.limpiar_texto(item.get("Canton", {}).get("descripcion", "DESCONOCIDO"))
-                nom = self.limpiar_texto(item.get("descripcion"))
-                est = self.limpiar_texto(item.get("EstadoActual", {}).get("nombre", "DESCONOCIDO"))
-                
-                alt_api = "N/A"
-                if item.get("DetalleViaAlterna"):
-                    detalles = item["DetalleViaAlterna"]
-                    if isinstance(detalles, list) and len(detalles) > 0:
-                         alt_api = detalles[0].get("Via", {}).get("descripcion", "N/A")
+        for item in raw_data:
+            if not isinstance(item, dict):
+                logger.warning("ECU 911 devolvió un registro no procesable")
+                continue
 
-                vias_procesadas.append({
-                    "id": f"{prov}-{nom}".lower().replace(" ", "-"),
-                    "provincia": prov,
-                    "canton": canton,
-                    "nombre_via": nom,
-                    "estado_texto": est,
-                    "estado_codigo": self.detectar_estado(est),
-                    "observaciones": obs,
-                    "via_alterna": self.extraer_via_alterna(obs, alt_api),
-                    "fecha_actualizacion": item.get("modified", "Sin fecha"),
-                    "fuente": "ECU911_API"
-                })
-            
-            print(f"--- [EXITO] Datos procesados: {len(vias_procesadas)} ---")
-            return {"cantidad": len(vias_procesadas), "datos": vias_procesadas}
+            observations = self.limpiar_texto(item.get("observaciones"))
+            province = self.limpiar_texto(item.get("Provincia", {}).get("descripcion"), "DESCONOCIDO")
+            canton = self.limpiar_texto(item.get("Canton", {}).get("descripcion"), "DESCONOCIDO")
+            road_name = self.limpiar_texto(item.get("descripcion"), "Vía sin nombre")
+            status = self.limpiar_texto(item.get("EstadoActual", {}).get("nombre"), "DESCONOCIDO")
 
-        except Exception as e:
-            print(f"--- [ERROR GENERAL] {str(e)} ---")
-            return {"cantidad": 0, "datos": [], "error": str(e)}
+            alternate = "N/A"
+            alternate_details = item.get("DetalleViaAlterna")
+            if isinstance(alternate_details, list) and alternate_details:
+                alternate = alternate_details[0].get("Via", {}).get("descripcion", "N/A")
+
+            processed_roads.append({
+                "id": str(item.get("id") or f"{province}-{road_name}".lower().replace(" ", "-")),
+                "provincia": province,
+                "canton": canton,
+                "nombre_via": road_name,
+                "estado_texto": status,
+                "estado_codigo": self.detectar_estado(status, observations),
+                "observaciones": observations,
+                "via_alterna": self.extraer_via_alterna(observations, alternate),
+                "fecha_actualizacion": self.limpiar_texto(
+                    item.get("modified") or item.get("created"),
+                    "Sin fecha",
+                ),
+                "fuente": "ECU911_API",
+            })
+
+        logger.info("ECU 911: %s registros procesados", len(processed_roads))
+        return {"cantidad": len(processed_roads), "datos": processed_roads}

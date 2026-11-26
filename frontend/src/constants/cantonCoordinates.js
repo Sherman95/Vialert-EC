@@ -96,23 +96,66 @@ export const CANTON_COORDINATES = {
     'TULCAN': { lat: 0.8119, lng: -77.7173 }
 };
 
+// Centros provinciales de referencia. Se usan únicamente cuando ECU 911 no
+// entrega coordenadas y el cantón todavía no está incluido en la tabla anterior.
+export const PROVINCE_COORDINATES = {
+    'AZUAY': { lat: -2.9001, lng: -79.0059 },
+    'BOLIVAR': { lat: -1.5926, lng: -79.0009 },
+    'CANAR': { lat: -2.5598, lng: -78.9380 },
+    'CARCHI': { lat: 0.8119, lng: -77.7173 },
+    'CHIMBORAZO': { lat: -1.6635, lng: -78.6546 },
+    'COTOPAXI': { lat: -0.9333, lng: -78.6167 },
+    'EL ORO': { lat: -3.2581, lng: -79.9554 },
+    'ESMERALDAS': { lat: 0.9682, lng: -79.6517 },
+    'GALAPAGOS': { lat: -0.9538, lng: -90.9656 },
+    'GUAYAS': { lat: -2.1894, lng: -79.8891 },
+    'IMBABURA': { lat: 0.3517, lng: -78.1223 },
+    'LOJA': { lat: -3.9931, lng: -79.2042 },
+    'LOS RIOS': { lat: -1.8022, lng: -79.5344 },
+    'MANABI': { lat: -1.0546, lng: -80.4544 },
+    'MORONA SANTIAGO': { lat: -2.3087, lng: -78.1114 },
+    'NAPO': { lat: -0.9938, lng: -77.8129 },
+    'ORELLANA': { lat: -0.4665, lng: -76.9872 },
+    'PASTAZA': { lat: -1.4924, lng: -78.0020 },
+    'PICHINCHA': { lat: -0.1807, lng: -78.4678 },
+    'SANTA ELENA': { lat: -2.2267, lng: -80.8587 },
+    'SANTO DOMINGO DE LOS TSACHILAS': { lat: -0.2530, lng: -79.1754 },
+    'SUCUMBIOS': { lat: 0.0847, lng: -76.8828 },
+    'TUNGURAHUA': { lat: -1.2491, lng: -78.6168 },
+    'ZAMORA CHINCHIPE': { lat: -4.0692, lng: -78.9567 },
+};
+
 // Centro de Ecuador (Latitud, Longitud)
 export const DEFAULT_ECUADOR_CENTER = [-1.8312, -78.1834];
 
+const normalizeLocationName = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+
 export const getCantonCoordinates = (cantonName) => {
     if (!cantonName) return null;
-    const key = cantonName.toUpperCase();
+    const key = normalizeLocationName(cantonName);
 
     // Búsqueda directa
-    if (CANTON_COORDINATES[key]) {
-        return CANTON_COORDINATES[key];
+    const directMatch = Object.keys(CANTON_COORDINATES)
+        .find((canton) => normalizeLocationName(canton) === key);
+    if (directMatch) {
+        return CANTON_COORDINATES[directMatch];
     }
 
     // Búsqueda parcial (ej: "SANTO DOMINGO DE LOS TSACHILAS" -> "SANTO DOMINGO")
-    const partialMatch = Object.keys(CANTON_COORDINATES).find(c => key.includes(c));
+    const partialMatch = Object.keys(CANTON_COORDINATES)
+        .find((canton) => key.includes(normalizeLocationName(canton)));
     if (partialMatch) {
         return CANTON_COORDINATES[partialMatch];
     }
 
     return null;
+};
+
+export const getProvinceCoordinates = (provinceName) => {
+    const key = normalizeLocationName(provinceName);
+    return PROVINCE_COORDINATES[key] || null;
 };

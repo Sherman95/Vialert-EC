@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vialert-ec.vercel.app/sitemap.xml

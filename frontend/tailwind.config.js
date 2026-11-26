@@ -6,8 +6,18 @@ export default {
     ],
     theme: {
         extend: {
+            colors: {
+                brand: {
+                    navy: '#062044',
+                    primary: '#0D47A1',
+                    blue: '#1976D2',
+                    red: '#E53935',
+                    green: '#2E7D32',
+                    yellow: '#FFC107',
+                },
+            },
             fontFamily: {
-                sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
             },
         },
     },

@@ -100,7 +100,9 @@ El proyecto está configurado para **Render**:
 2.  Archivo `runtime.txt` para versión de Python.
 3.  Variables de Entorno requeridas:
     *   `DATABASE_URL`: String de conexión a PostgreSQL (ej: Neon.tech).
-    *   `ECU911_URL`: `https://www.ecu911.gob.ec`
+    *   `ECU911_URL`: `https://ecu911.gob.ec/Services/WSVias/ViasWeb.php?estado=A&and:%3C%3E:EstadoActual-id=593&order=Provincia-descripcion&limit=600&start=0`
+
+> Nunca guardes credenciales reales en `backend/.env`. Usa las variables de entorno del proveedor y conserva únicamente `backend/.env.example` en Git.
 
 ---
 

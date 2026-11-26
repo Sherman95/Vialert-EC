@@ -9,7 +9,7 @@ const items = [
 ];
 
 export const StatsGrid = ({ stats }) => (
-    <section aria-label="Resumen de condiciones viales" className="grid grid-cols-4 gap-2">
+    <section aria-label="Resumen de condiciones viales" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {items.map((item) => (
             <div key={item.key} className="min-w-0 rounded-lg border border-slate-200 bg-white p-2.5 sm:p-3">
                 <div className={`mb-2 flex h-7 w-7 items-center justify-center rounded-md ${item.surface} ${item.tone}`}>

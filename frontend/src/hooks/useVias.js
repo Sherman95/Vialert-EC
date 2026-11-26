@@ -46,7 +46,7 @@ export const useVias = () => {
     ), [reportsQuery.data]);
 
     const rawVias = useMemo(() => {
-        const officialRoads = Array.isArray(officialQuery.data) ? officialQuery.data : [];
+        const officialRoads = Array.isArray(officialQuery.data?.roads) ? officialQuery.data.roads : [];
         return [...normalizedReports, ...officialRoads]
             .sort((first, second) => toTimestamp(second.fecha_actualizacion) - toTimestamp(first.fecha_actualizacion));
     }, [normalizedReports, officialQuery.data]);
@@ -101,6 +101,9 @@ export const useVias = () => {
         isFetching: officialQuery.isFetching || reportsQuery.isFetching,
         loading: officialQuery.isFetching || reportsQuery.isFetching,
         dataUpdatedAt: Math.max(officialQuery.dataUpdatedAt || 0, reportsQuery.dataUpdatedAt || 0),
+        isCached: Boolean(officialQuery.data?.isCached),
+        isStale: Boolean(officialQuery.data?.isStale),
+        cachedAt: officialQuery.data?.cachedAt || null,
         error: officialQuery.error ? 'Error conectando con la fuente oficial' : null,
         filters,
         setFilters,
