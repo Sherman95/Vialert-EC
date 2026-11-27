@@ -7,6 +7,26 @@ import { getRoadMapPoint, hasFiniteCoordinates } from '../../utils/mapCoordinate
 
 const ECUADOR_GEOJSON_URL = 'https://raw.githubusercontent.com/jpmarindiaz/geo-collection/master/ecu/ecuador.geojson';
 
+const PROVINCE_TONES = {
+    red: { color: '#b91c1c', label: 'Cerrada', priority: 4 },
+    amber: { color: '#d97706', label: 'Paso controlado', priority: 3 },
+    blue: { color: '#0369a1', label: 'Reporte comunitario', priority: 2 },
+    green: { color: '#15803d', label: 'Habilitada', priority: 1 },
+};
+
+const normalizeProvinceName = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+
+const getRoadTone = (road) => {
+    if (road?.isUserReport || road?.estado_codigo === 'REPORTE') return 'blue';
+    if (road?.estado_codigo === 'CERRADA') return 'red';
+    if (road?.estado_codigo === 'PARCIAL') return 'amber';
+    return 'green';
+};
+
 const markerIcons = ['red', 'amber', 'green', 'blue'].reduce((result, tone) => {
     result[tone] = L.divIcon({
         className: 'road-marker-shell',
@@ -32,12 +52,12 @@ const hasUsableMapViewport = (map) => {
 const findSelectedFeature = (data, selected) => {
     if (!Array.isArray(data?.features) || !selected || selected === 'TODAS') return null;
 
-    const selectedName = selected.toUpperCase();
+    const selectedName = normalizeProvinceName(selected);
     return data.features.find((feature) => {
         const provinceName = feature?.properties?.dpa_despro;
         if (typeof provinceName !== 'string') return false;
 
-        const normalizedProvinceName = provinceName.toUpperCase();
+        const normalizedProvinceName = normalizeProvinceName(provinceName);
         return normalizedProvinceName.includes(selectedName) || selectedName.includes(normalizedProvinceName);
     }) || null;
 };
@@ -76,19 +96,7 @@ const ProvinceHighlighter = ({ data, selected }) => {
         return () => map.stop();
     }, [map, selected, selectedFeature]);
 
-    return selectedFeature ? (
-        <GeoJSON
-            key={selected}
-            data={selectedFeature}
-            style={{
-                color: '#0f4c6e',
-                weight: 3,
-                opacity: 0.95,
-                fillColor: '#2d789c',
-                fillOpacity: 0.12,
-            }}
-        />
-    ) : null;
+    return null;
 };
 
 const MapResizeHandler = () => {
@@ -156,6 +164,62 @@ export const ViaMap = ({ vias = [], selectedProvince, selectedRoadId }) => {
         () => markers.find((road) => road.id === selectedRoadId) || null,
         [markers, selectedRoadId],
     );
+    const provinceSummaries = useMemo(() => vias.reduce((summaries, road) => {
+        const provinceKey = normalizeProvinceName(road.provincia);
+        if (!provinceKey) return summaries;
+
+        const tone = getRoadTone(road);
+        const current = summaries.get(provinceKey) || {
+            province: road.provincia,
+            total: 0,
+            tone,
+            counts: { red: 0, amber: 0, green: 0, blue: 0 },
+        };
+        current.total += 1;
+        current.counts[tone] += 1;
+        if (PROVINCE_TONES[tone].priority > PROVINCE_TONES[current.tone].priority) current.tone = tone;
+        summaries.set(provinceKey, current);
+        return summaries;
+    }, new Map()), [vias]);
+    const provinceLayerKey = useMemo(() => [...provinceSummaries.entries()]
+        .sort(([first], [second]) => first.localeCompare(second))
+        .map(([province, summary]) => `${province}:${summary.tone}:${summary.total}`)
+        .join('|'), [provinceSummaries]);
+    const selectedProvinceKey = normalizeProvinceName(selectedProvince);
+
+    const getProvinceStyle = (feature) => {
+        const provinceName = normalizeProvinceName(feature?.properties?.dpa_despro);
+        const summary = provinceSummaries.get(provinceName);
+        const selected = selectedProvinceKey && selectedProvinceKey !== 'TODAS' && (
+            provinceName.includes(selectedProvinceKey) || selectedProvinceKey.includes(provinceName)
+        );
+
+        return {
+            color: selected ? '#062f55' : '#64748b',
+            weight: selected ? 3 : 1.2,
+            opacity: summary || selected ? 0.9 : 0.45,
+            fillColor: summary ? PROVINCE_TONES[summary.tone].color : '#cbd5e1',
+            fillOpacity: summary ? (selected ? 0.34 : 0.22) : 0.04,
+        };
+    };
+
+    const bindProvinceTooltip = (feature, layer) => {
+        const provinceName = feature?.properties?.dpa_despro || 'Provincia';
+        const summary = provinceSummaries.get(normalizeProvinceName(provinceName));
+        const content = document.createElement('div');
+        content.className = 'vialert-province-tooltip';
+
+        const title = document.createElement('strong');
+        title.textContent = provinceName;
+        content.appendChild(title);
+
+        const detail = document.createElement('span');
+        detail.textContent = summary
+            ? `${PROVINCE_TONES[summary.tone].label} · ${summary.total} ${summary.total === 1 ? 'registro visible' : 'registros visibles'}`
+            : 'Sin registros visibles';
+        content.appendChild(detail);
+        layer.bindTooltip(content, { sticky: true, direction: 'top', opacity: 0.96 });
+    };
 
     return (
         <div className="relative h-full w-full overflow-hidden bg-slate-200">
@@ -177,6 +241,14 @@ export const ViaMap = ({ vias = [], selectedProvince, selectedRoadId }) => {
                 />
 
                 <MapResizeHandler />
+                {geoJsonData && (
+                    <GeoJSON
+                        key={`${selectedProvinceKey}-${provinceLayerKey}`}
+                        data={geoJsonData}
+                        style={getProvinceStyle}
+                        onEachFeature={bindProvinceTooltip}
+                    />
+                )}
                 <ProvinceHighlighter data={geoJsonData} selected={selectedProvince} />
                 <SelectedRoadController road={selectedRoad} />
 

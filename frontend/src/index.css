@@ -205,6 +205,26 @@ select {
   border: 1px solid #e2e8f0;
 }
 
+.vialert-province-tooltip {
+  display: flex;
+  min-width: 160px;
+  flex-direction: column;
+  gap: 3px;
+  color: #334155;
+  font-family: Poppins, Arial, sans-serif;
+}
+
+.vialert-province-tooltip strong {
+  color: #0f172a;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.vialert-province-tooltip span {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
 .app-splash {
   position: fixed;
   inset: 0;

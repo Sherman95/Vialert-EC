@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
     TriangleAlert,
     MapPin,
@@ -83,6 +83,14 @@ export const HomePage = () => {
         setSelectedRoadId(road.id);
         setMobileView('map');
     };
+
+    const mapLegendStats = useMemo(() => filteredVias.reduce((totals, road) => {
+        if (road.isUserReport || road.estado_codigo === 'REPORTE') totals.comunidad += 1;
+        else if (road.estado_codigo === 'CERRADA') totals.cerradas += 1;
+        else if (road.estado_codigo === 'PARCIAL') totals.controladas += 1;
+        else totals.habilitadas += 1;
+        return totals;
+    }, { cerradas: 0, controladas: 0, habilitadas: 0, comunidad: 0 }), [filteredVias]);
 
     return (
         <div className="app-shell flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-900">
@@ -237,12 +245,13 @@ export const HomePage = () => {
                         <p className="mt-0.5 text-xs font-medium text-slate-600">{filteredVias.length} registros en el mapa</p>
                     </div>
 
-                    <div className="absolute bottom-4 left-4 z-[500] hidden rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur lg:block">
-                        <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
-                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-red-700" /> Cerrada</span>
-                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-amber-600" /> Controlada</span>
-                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-emerald-700" /> Habilitada</span>
-                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-sky-700" /> Comunidad</span>
+                    <div className="absolute bottom-4 left-4 z-[500] hidden rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-md backdrop-blur lg:block">
+                        <p className="mb-1.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-500">Color provincial · condición más crítica</p>
+                        <div className="flex items-center gap-3 text-xs font-semibold text-slate-600">
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-red-700" /> Cerrada <b className="tabular-nums text-slate-900">{mapLegendStats.cerradas}</b></span>
+                            <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-amber-600" /> Controlada <b className="tabular-nums text-slate-900">{mapLegendStats.controladas}</b></span>
+                            <span className={`flex items-center gap-1.5 ${mapLegendStats.habilitadas === 0 ? 'opacity-55' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-emerald-700" /> Habilitada <b className="tabular-nums text-slate-900">{mapLegendStats.habilitadas}</b></span>
+                            <span className={`flex items-center gap-1.5 ${mapLegendStats.comunidad === 0 ? 'opacity-55' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-sky-700" /> Comunidad <b className="tabular-nums text-slate-900">{mapLegendStats.comunidad}</b></span>
                         </div>
                     </div>
 
